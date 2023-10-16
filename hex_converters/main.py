@@ -19,11 +19,9 @@ def hex_to_dec(hex_str):
     else:
       current_value = int(character)
     
-    dec_values.append(current_value)
+    dec_values.insert(0, current_value)
 
-  reverse_list = reversed(dec_values)
-  
-  for current_value in reverse_list:
+  for current_value in dec_values:
     value_to_add = current_value * current_multipier
     dec_value += value_to_add
     current_multipier *= 16
@@ -31,7 +29,32 @@ def hex_to_dec(hex_str):
   return dec_value
     
 def dec_to_hex(dec_num):
-  pass
+  remainders = []
+  current_value = int(dec_num)
+  while current_value >= 1:
+    quotient = current_value // 16
+    remainder = current_value % 16
+    remainders.insert(0, remainder)
+    current_value = quotient
+  
+  hex_str = ''
+  for remainder in remainders:
+    if remainder == 10:
+      hex_str += 'A'
+    elif remainder == 11:
+      hex_str += 'B'
+    elif remainder == 12:
+      hex_str += 'C'
+    elif remainder == 13:
+      hex_str += 'D'
+    elif remainder == 14:
+      hex_str += 'E'
+    elif remainder == 15:
+      hex_str += 'F'
+    else:
+      hex_str += str(remainder)
+
+  return hex_str
 
 has_quit = False
 print('*** Hexadecimal Converter ***')
@@ -41,18 +64,20 @@ while has_quit is False:
   print(dash * 20)
   print('(H)exadecimal to Decimal Conversion\n(D)ecimal to Hexadecimal Conversion\n(Q)uit')
   choice = input()
-  # try:
-  if choice.lower() == 'h':
-    chosen_hex = input('Enter a Hexadecimal Number: ')
-    print('= ' + str(hex_to_dec(chosen_hex)))
-  elif choice.lower() == 'd':
-    chosen_number = input('Enter a Decimal Number (0-255): ')
-    print('= ' + dec_to_hex(chosen_number))
-  elif choice.lower() == 'q':
-    print('\nGoodbye!')
-    has_quit = True
-    break
-  # except:
-  #   print("I didn't understand your selection. Please type the letter corresponding with your choice and press enter.")
+  try:
+    if choice.lower() == 'h':
+      chosen_hex = input('Enter a Hexadecimal Number: ')
+      print('= ' + str(hex_to_dec(chosen_hex)))
+    elif choice.lower() == 'd':
+      chosen_number = input('Enter a Decimal Number: ')
+      print('= ' + dec_to_hex(chosen_number))
+    elif choice.lower() == 'q':
+      print('\nGoodbye!')
+      has_quit = True
+      break
+    else:
+      print("I didn't understand your selection. Please type the letter corresponding with your choice and press enter.")
+  except:
+    print("Something went wrong. Please check your input and try again.")
   
   input('\nPress <enter> to continue')
