@@ -1,6 +1,77 @@
 # Note to grader- The random module was imported just for testing and isn't used in the actual binary calculations. All test code is commented out but available if you want to take a look at it.
 # import random
 
+# Extra Hexadecimal Functionality
+####################################################################################################################
+def hex_to_dec(hex_str):
+  dec_values = []
+  dec_value = 0
+  current_multipier = 1
+  for character in hex_str:
+    current_value = 0
+    if character.lower() == 'a':
+      current_value = 10
+    elif character.lower() == 'b':
+      current_value = 11
+    elif character.lower() == 'c':
+      current_value = 12
+    elif character.lower() == 'd':
+      current_value = 13
+    elif character.lower() == 'e':
+      current_value = 14
+    elif character.lower() == 'f':
+      current_value = 15
+    else:
+      current_value = int(character)
+    
+    dec_values.insert(0, current_value)
+
+  for current_value in dec_values:
+    value_to_add = current_value * current_multipier
+    dec_value += value_to_add
+    current_multipier *= 16
+
+  return dec_value
+    
+def dec_to_hex(dec_num):
+  remainders = []
+  current_value = int(dec_num)
+  while current_value >= 1:
+    quotient = current_value // 16
+    remainder = current_value % 16
+    remainders.insert(0, remainder)
+    current_value = quotient
+  
+  hex_str = ''
+  for remainder in remainders:
+    if remainder == 10:
+      hex_str += 'A'
+    elif remainder == 11:
+      hex_str += 'B'
+    elif remainder == 12:
+      hex_str += 'C'
+    elif remainder == 13:
+      hex_str += 'D'
+    elif remainder == 14:
+      hex_str += 'E'
+    elif remainder == 15:
+      hex_str += 'F'
+    else:
+      hex_str += str(remainder)
+
+  return hex_str
+
+def hex_to_bin(hex_str):
+  dec_value = hex_to_dec(hex_str)
+  bin_str = dec_to_bin(dec_value)
+  return bin_str
+
+def bin_to_hex(bin_str):
+  dec_value = bin_to_dec(bin_str)
+  hex_str = dec_to_hex(dec_value)
+  return hex_str
+####################################################################################################################
+
 def bin_str_from_list(str_list):
   new_bin_str = ''
   for str in str_list:
@@ -235,7 +306,7 @@ def bin_division(bin_str_1, bin_str_2):
     return f'{quotient_str} Remainder: {remainder_str}'
   except:
     return error_message
-
+  
 # Testing Code
 ####################################################################################################################
 
@@ -370,7 +441,7 @@ print('*** Binary Calculator ***')
 while has_quit is False:
   dash = '-'
   print(dash * 20)
-  print('(B)inary to Decimal Conversion\n(D)ecimal to Binary Conversion\n(A)dd two Binary Numbers\n(S)ubtract two Binary Numbers\n(M)ultiply two Binary Numbers\nD(i)vide two Binary Numbers\n(Q)uit')
+  print('(B)inary to Decimal Conversion\n(D)ecimal to Binary Conversion\n(H)exadecimal to Binary Conversion\nBi(n)ary to Hexadecimal Conversion\n(A)dd two Binary Numbers\n(S)ubtract two Binary Numbers\n(M)ultiply two Binary Numbers\nD(i)vide two Binary Numbers\n(Q)uit')
   choice = input()
   try:
     if choice.lower() == 'b':
@@ -379,6 +450,12 @@ while has_quit is False:
     elif choice.lower() == 'd':
       chosen_number = input('Enter a Decimal Number (0-255): ')
       print('= ' + dec_to_bin(chosen_number))
+    elif choice.lower() == 'h':
+      chosen_number = input('Enter a Hexadecimal Number: ')
+      print('= ' + hex_to_bin(chosen_number))
+    elif choice.lower() == 'n':
+      chosen_number = input('Enter a Binary Number (8-digits): ')
+      print('= ' + bin_to_hex(chosen_number))
     elif choice.lower() == 'a':
       bin_str_1 = input('Enter the first binary number : ')
       bin_str_2 = input('Enter the second binary number: ')
