@@ -3,6 +3,7 @@ import random
 winning_combinations = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
 
 corner_ids = [0, 2, 6, 8]
+edge_ids = [1, 3, 5, 7]
 center_id = 4
 
 def get_available_moves(board):
@@ -13,7 +14,8 @@ def get_available_moves(board):
    
    return output
 
-def get_winning_move(board, letter):
+def get_winning_moves(board, letter):
+   moves = []
    for set in winning_combinations:
     letter_controlled_spaces = 0
     open_space = None
@@ -25,10 +27,12 @@ def get_winning_move(board, letter):
          open_space = possible_win_space_id
       
       if open_space != None and letter_controlled_spaces == 2:
-         return open_space
-      
-   return None
-        
+         moves.append(open_space)
+   
+   if len(moves) > 0:
+      return moves
+   else:
+      return None
 
 def get_move(board, letter):
    opponent_letter = ''
@@ -38,14 +42,14 @@ def get_move(board, letter):
      opponent_letter = 'X'
    # If win move is available for you, take it. If not but is available for opponent, block them
    available_moves = get_available_moves(board)
-   winning_move = get_winning_move(board, letter)
-   opponent_winning_move = get_winning_move(board, opponent_letter)
-   if winning_move != None:
-     return winning_move
-   elif opponent_winning_move != None:
-     return opponent_winning_move
+   winning_moves = get_winning_moves(board, letter)
+   opponent_winning_moves = get_winning_moves(board, opponent_letter)
+   if winning_moves != None:
+     return random.choice(winning_moves)
+   elif opponent_winning_moves != None:
+     return random.choice(opponent_winning_moves)
    # If all spaces are available or it's the second turn and the center is taken, take a corner
-   elif len(available_moves) == 9 or (len(available_moves) == 8 and not center_is_available):
+   elif len(available_moves) == 9 or (len(available_moves) == 8 and not center_is_available(available_moves)):
       return random.choice([0, 2, 6, 8])
    # On second turn if not taken, take center
    elif len(available_moves) == 8 and center_is_available(available_moves):
@@ -67,6 +71,7 @@ def get_move(board, letter):
             
             if corner_is_ok:
                return corner
+            
    # If setting up trap on turn 5, place in corner with no adjacent 'O's.
    elif len(available_moves) == 5 and center_is_available(available_moves):
       for move in available_moves:
@@ -79,9 +84,29 @@ def get_move(board, letter):
                   corner_is_ok = False
             if corner_is_ok:
                return move
+   # On turn 4, if X's in opposite corners and O in middle, place on an edge, not another corner.
+   elif len(available_moves) == 6 and (board[0] == 'X' and board[8] == 'X') or (board[2] == 'X' and board[6] == 'X'):
+      return random.choice(edge_ids)
 
+
+   # Check for potential traps. If any, block them.
    else:
-      return random.choice(available_moves)
+      # return random.choice(available_moves)
+      possible_trap_moves = []
+      for move in available_moves:
+         test_board = []
+         for space in board:
+            test_board.append(space)
+         test_board[move] = opponent_letter
+         test_opponent_win_moves = get_winning_moves(test_board, opponent_letter)
+         if test_opponent_win_moves and len(test_opponent_win_moves) >= 2:
+            possible_trap_moves.append(move)
+          
+      if len(possible_trap_moves) > 0:
+         return possible_trap_moves[0]
+      else:
+         # return 7
+         return random.choice(available_moves)
 
 def at_least_one_corner_is_occupied(board):
    corners = [board[0], board[2], board[6], board[8]]
