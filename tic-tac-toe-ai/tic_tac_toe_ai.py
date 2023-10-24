@@ -88,10 +88,16 @@ def get_move(board, letter):
    elif len(available_moves) == 6 and (board[0] == 'X' and board[8] == 'X') or (board[2] == 'X' and board[6] == 'X'):
       return random.choice(edge_ids)
 
+   # If turn 4, X center, X, corner, O opposite corner, place in another corner
 
+   elif len(available_moves) == 6 and board[4] == 'X' and (board[0] == 'X' or board[2] == 'X' or board[6] == 'X' or board[8] == 'X'):
+      if board[0] == 'X' or board[0] == 'O':
+         return random.choice([2, 6])
+      elif board[2] == 'X' or board[2] == 'O':
+         return random.choice([0, 8])
+   
    # Check for potential traps. If any, block them.
    else:
-      # return random.choice(available_moves)
       possible_trap_moves = []
       for move in available_moves:
          test_board = []
@@ -104,17 +110,19 @@ def get_move(board, letter):
           
       if len(possible_trap_moves) > 0:
          return possible_trap_moves[0]
+      
+
       else:
-         # return 7
+         # If all Else fails, pick a random spot
          return random.choice(available_moves)
 
-def at_least_one_corner_is_occupied(board):
-   corners = [board[0], board[2], board[6], board[8]]
-   for corner in corners:
-      if corner != '':
-         return True
+# def at_least_one_corner_is_occupied(board):
+#    corners = [board[0], board[2], board[6], board[8]]
+#    for corner in corners:
+#       if corner != '':
+#          return True
    
-   return False
+#    return False
 
 def get_adjacent_corners(corner_id):
    if corner_id == 0 or corner_id == 8:
@@ -122,15 +130,15 @@ def get_adjacent_corners(corner_id):
    elif corner_id == 2 or corner_id == 6:
       return [0, 8]
    
-def get_opposite_corner(corner_id):
-   if corner_id == 0:
-      return 8
-   elif corner_id == 2:
-      return 6
-   elif corner_id == 6:
-      return 2
-   elif corner_id == 8:
-      return 0
+# def get_opposite_corner(corner_id):
+#    if corner_id == 0:
+#       return 8
+#    elif corner_id == 2:
+#       return 6
+#    elif corner_id == 6:
+#       return 2
+#    elif corner_id == 8:
+#       return 0
    
 def center_is_available(available_moves):
    if center_id in available_moves:
