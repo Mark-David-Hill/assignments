@@ -49,10 +49,10 @@ def get_move(board, letter):
    elif opponent_winning_moves != None:
      return random.choice(opponent_winning_moves)
    # If all spaces are available or it's the second turn and the center is taken, take a corner
-   elif len(available_moves) == 9 or (len(available_moves) == 8 and not center_is_available(available_moves)):
+   elif len(available_moves) == 9 or (len(available_moves) == 8 and board[center_id] != ''):
       return random.choice(corner_ids)
    # On second turn if not taken, take center
-   elif len(available_moves) == 8 and center_is_available(available_moves):
+   elif len(available_moves) == 8 and board[center_id] == '':
       return center_id
    # Turn 3- take an adjacent corner not adjacent to an opponent's letter
    elif len(available_moves) == 7:
@@ -66,12 +66,10 @@ def get_move(board, letter):
             for space in adjacent_spaces:
                if space == opponent_controlled_space:
                   corner_is_ok = False
-            
             if corner_is_ok:
                return corner
-            
    # If setting up trap on turn 5, place in corner with no adjacent 'O's.
-   elif len(available_moves) == 5 and center_is_available(available_moves):
+   elif len(available_moves) == 5 and board[4] == '':
       for move in available_moves:
          opponent_controlled_spaces = get_letter_spaces(board, opponent_letter)
          if move != center_id and move % 2 == 0:
@@ -85,14 +83,12 @@ def get_move(board, letter):
    # On turn 4, if X's in opposite corners and O in middle, place on an edge, not another corner.
    elif len(available_moves) == 6 and (board[0] == 'X' and board[8] == 'X') or (board[2] == 'X' and board[6] == 'X'):
       return random.choice(edge_ids)
-
    # If turn 4, X center, X, corner, O opposite corner, place in another corner
    elif len(available_moves) == 6 and board[4] == 'X' and (board[0] == 'X' or board[2] == 'X' or board[6] == 'X' or board[8] == 'X'):
       if board[0] == 'X' or board[0] == 'O':
          return random.choice([2, 6])
       elif board[2] == 'X' or board[2] == 'O':
          return random.choice([0, 8])
-   
    # Check for potential traps. If any, block them.
    else:
       possible_trap_moves = []
@@ -104,13 +100,10 @@ def get_move(board, letter):
          test_opponent_win_moves = get_winning_moves(test_board, opponent_letter)
          if test_opponent_win_moves and len(test_opponent_win_moves) >= 2:
             possible_trap_moves.append(move)
-          
       if len(possible_trap_moves) > 0:
          return possible_trap_moves[0]
-      
-
+      # If all Else fails, pick a random spot
       else:
-         # If all Else fails, pick a random spot
          return random.choice(available_moves)
 
 def get_adjacent_corners(corner_id):
@@ -119,37 +112,20 @@ def get_adjacent_corners(corner_id):
    elif corner_id == 2 or corner_id == 6:
       return [0, 8]
    
-def center_is_available(available_moves):
-   if center_id in available_moves:
-      return True
-   else:
-      return False
-
 def get_letter_spaces(board, letter):
    my_letter_spaces = []
    for i in range(len(board)):
       if board[i] == letter:
          my_letter_spaces.append(i)
-   
    return my_letter_spaces
 
 def get_adjacent_spaces(space_id):
    if space_id == 0:
       return [1, 3]
-   elif space_id == 1:
-      return [0, 2, 4]
    elif space_id == 2:
       return [1, 5]
-   elif space_id == 3:
-      return [0, 4, 6]
-   elif space_id == 4:
-      return [1, 3, 5, 7]
-   elif space_id == 5:
-      return [2, 4, 8]
    elif space_id == 6:
       return [3, 7]
-   elif space_id == 7:
-      return [4, 6, 8]
    elif space_id == 8:
       return [5, 7]
 
