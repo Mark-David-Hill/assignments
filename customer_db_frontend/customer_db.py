@@ -1,8 +1,10 @@
 # To Do:
 # -Search Functionality
 # -Add Customer Functionality
+# -Print out customer details again after updating a field, then give update prompt again.
 # -Random 'None' printed when getting individual customer info?
 # -Make sure correct responses when incorrect options typed
+# -Get things to work correctly if not all fields are filled out for an entry?
 
 import sqlite3
 connection = sqlite3.connect('dp_customers.db')
@@ -32,18 +34,25 @@ def print_customer_details(customer_info):
   # except:
   #   return False
 
+def get_all_customers():
+  rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers").fetchall()
+  return rows
+
 def print_all_customers():
   print('\n--- Customers ---')
-  rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers").fetchall();
-
-  # columns = ['id', 'Name', 'City', 'State', 'Phone', 'Email']
+  rows = get_all_customers()
   print(f'{"id":<2} {"Name":<25} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
-
   for row in rows:
+    row_data = []
+    for i in range(len(row)):
+      if row[i]:
+        row_data.append(row[i])
+      else:
+        row_data.append('None')
     try:
-      print(f'{row[0]:<2} {row[1]:<25} {row[2]:<20} {row[3]:<10} {row[4]:<15} {row[5]:<25}')
+      print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
     except:
-      pass
+      print('invalid row')
 
 def update_customer_info(field_to_update, new_value, customer_id):
   sql_update = f"UPDATE Customers SET {field_to_update}=? WHERE customer_id=?"
@@ -65,7 +74,7 @@ def view_customers():
   customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
   customer_info = get_customer_info(customer_choice)
   if customer_info:
-    print(print_customer_details(customer_info))
+    print_customer_details(customer_info)
     customer_id, customer_name, customer_address, customer_city, customer_state, customer_zipcode, customer_phone, customer_email = customer_info
     edit_customer_choice = input("\nTo update a field, enter the first letter of the field. \nTo delete this record, type 'DELETE'\nTo return to the main menu, press 'Enter'.\n>>>")
     if edit_customer_choice.lower() == 'i':
