@@ -1,5 +1,4 @@
 # To Do:
-# -Search Functionality
 # -Add Customer Functionality
 # -Make sure correct responses when incorrect options typed
 
@@ -33,6 +32,12 @@ def print_customer_details(customer_info):
 
 def get_all_customers():
   rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers").fetchall()
+  return rows
+
+def get_searched_customers(search_str):
+  like_search_str = '%' + search_str + '%'
+  sql_search = "SELECT customer_id, name, city, state, phone, email FROM Customers WHERE name LIKE ?"
+  rows = cursor.execute(sql_search, (like_search_str,)).fetchall()
   return rows
 
 def print_all_customers():
@@ -122,21 +127,38 @@ def view_customers_option():
     continue_loop = update_choice(customer_info, customer_choice)
     if not continue_loop:
       break
-  
 
-def search_customers():
-  pass
+def search_customers_option():
+  search_str = input('\nSearch Term: ')
+  rows = get_searched_customers(search_str)
+  print(f'{"id":<2} {"Name":<25} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
+  for row in rows:
+    row_data = []
+    for i in range(len(row)):
+      if row[i]:
+        row_data.append(row[i])
+      else:
+        row_data.append('None')
+    try:
+      print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
+    except:
+      print('invalid row')
+  customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
+  while True:
+    customer_info = get_customer_info(customer_choice,)
+    continue_loop = update_choice(customer_info, customer_choice)
+    if not continue_loop:
+      break
 
 def add_customer():
   pass
-
 
 while True:
   choice = input('\n**** Customer Database ****\n\n[1] View All Customers\n[2] Search Customers\n[3] Add a New Customer\n[Q] Quit\n\n>>>')
   if choice == '1':
     view_customers_option()
   elif choice == '2':
-    search_customers()
+    search_customers_option()
   elif choice == '3':
     add_customer
   elif choice.lower() == 'q':
