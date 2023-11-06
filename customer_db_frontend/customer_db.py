@@ -4,7 +4,7 @@
 # -Print out customer details again after updating a field, then give update prompt again.
 # -Random 'None' printed when getting individual customer info?
 # -Make sure correct responses when incorrect options typed
-# -Get things to work correctly if not all fields are filled out for an entry?
+# -Check on what happens if duplicates are used for unique fields
 
 import sqlite3
 connection = sqlite3.connect('dp_customers.db')
@@ -54,25 +54,7 @@ def print_all_customers():
     except:
       print('invalid row')
 
-def update_customer_info(field_to_update, new_value, customer_id):
-  sql_update = f"UPDATE Customers SET {field_to_update}=? WHERE customer_id=?"
-  update_values = (new_value, customer_id)
-  cursor.execute(sql_update, update_values)
-  connection.commit()
-
-def delete_customer(id, name):
-  really_delete = input(f'Are you SURE you want to DELETE Customer {id}:"{name}" (Y/N)? ')
-  if really_delete.lower() == 'y':
-    sql_delete = "DELETE FROM Customers WHERE customer_id=?"
-    cursor.execute(sql_delete, (id,)).fetchone()
-    connection.commit()
-    print(f'SUCCESS: Customer "{name}" successfully Deleted!')
-
-
-def view_customers():
-  print_all_customers()
-  customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
-  customer_info = get_customer_info(customer_choice)
+def update_choice(customer_info, customer_choice):
   if customer_info:
     print_customer_details(customer_info)
     customer_id, customer_name, customer_address, customer_city, customer_state, customer_zipcode, customer_phone, customer_email = customer_info
@@ -116,10 +98,37 @@ def view_customers():
       print('SUCCESS: Email updated!')
     elif edit_customer_choice.lower() == 'delete':
       delete_customer(customer_id, customer_name)
+      return False
     elif edit_customer_choice == '':
-      pass
+      return False
     else:
       print('Invalid selection. Please try again.')
+    return True
+
+def update_customer_info(field_to_update, new_value, customer_id):
+  sql_update = f"UPDATE Customers SET {field_to_update}=? WHERE customer_id=?"
+  update_values = (new_value, customer_id)
+  cursor.execute(sql_update, update_values)
+  connection.commit()
+
+def delete_customer(id, name):
+  really_delete = input(f'Are you SURE you want to DELETE Customer {id}:"{name}" (Y/N)? ')
+  if really_delete.lower() == 'y':
+    sql_delete = "DELETE FROM Customers WHERE customer_id=?"
+    cursor.execute(sql_delete, (id,)).fetchone()
+    connection.commit()
+    print(f'SUCCESS: Customer "{name}" successfully Deleted!')
+
+
+def view_customers_option():
+  print_all_customers()
+  customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
+  while True:
+    customer_info = get_customer_info(customer_choice,)
+    continue_loop = update_choice(customer_info, customer_choice)
+    if not continue_loop:
+      break
+  
 
 def search_customers():
   pass
@@ -131,7 +140,7 @@ def add_customer():
 while True:
   choice = input('\n**** Customer Database ****\n\n[1] View All Customers\n[2] Search Customers\n[3] Add a New Customer\n[Q] Quit\n\n>>>')
   if choice == '1':
-    view_customers()
+    view_customers_option()
   elif choice == '2':
     search_customers()
   elif choice == '3':
