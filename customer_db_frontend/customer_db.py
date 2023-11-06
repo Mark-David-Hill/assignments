@@ -1,10 +1,7 @@
 # To Do:
 # -Search Functionality
 # -Add Customer Functionality
-# -Print out customer details again after updating a field, then give update prompt again.
-# -Random 'None' printed when getting individual customer info?
 # -Make sure correct responses when incorrect options typed
-# -Check on what happens if duplicates are used for unique fields
 
 import sqlite3
 connection = sqlite3.connect('dp_customers.db')
@@ -64,38 +61,31 @@ def update_choice(customer_info, customer_choice):
     elif edit_customer_choice.lower() == 'n':
       print(f'\nCurrent Name: {customer_name}')
       new_name = input('New Name: ')
-      update_customer_info('name', new_name, customer_choice)
-      print('SUCCESS: Name updated!')
+      update_customer_info('name', new_name, customer_choice, 'Name')
     elif edit_customer_choice.lower() == 'a':
       print(f'\nCurrent Address: {customer_address}')
-      new_address = input('New Address:')
-      update_customer_info('street_address', new_address, customer_choice)
-      print('SUCCESS: Address updated!')
+      new_address = input('New Address: ')
+      update_customer_info('street_address', new_address, customer_choice, 'Address')
     elif edit_customer_choice.lower() == 'c':
       print(f'\nCurrent City: {customer_city}')
-      new_city = input('New City:')
-      update_customer_info('city', new_city, customer_choice)
-      print('SUCCESS: City updated!')
+      new_city = input('New City: ')
+      update_customer_info('city', new_city, customer_choice, 'City')
     elif edit_customer_choice.lower() == 's':
       print(f'\nCurrent State: {customer_state}')
-      new_state = input('New State:')
-      update_customer_info('state', new_state, customer_choice)
-      print('SUCCESS: State updated!')
+      new_state = input('New State: ')
+      update_customer_info('state', new_state, customer_choice, 'State')
     elif edit_customer_choice.lower() == 'z':
       print(f'\nCurrent Zipcode: {customer_zipcode}')
-      new_zipcode = input('New Zipcode:')
-      update_customer_info('postal_code', new_zipcode, customer_choice)
-      print('SUCCESS: Zipcode updated!')
+      new_zipcode = input('New Zipcode: ')
+      update_customer_info('postal_code', new_zipcode, customer_choice, 'Zipcode')
     elif edit_customer_choice.lower() == 'p':
       print(f'\nCurrent Phone Number: {customer_phone}')
-      new_phone_number = input('New Phone Number:')
-      update_customer_info('phone', new_phone_number, customer_choice)
-      print('SUCCESS: Phone Number updated!')
+      new_phone_number = input('New Phone Number: ')
+      update_customer_info('phone', new_phone_number, customer_choice, 'Phone Number')
     elif edit_customer_choice.lower() == 'e':
       print(f'\nCurrent Email: {customer_email}')
-      new_email = input('New Email:')
-      update_customer_info('email', new_email, customer_choice)
-      print('SUCCESS: Email updated!')
+      new_email = input('New Email: ')
+      update_customer_info('email', new_email, customer_choice, 'Email')
     elif edit_customer_choice.lower() == 'delete':
       delete_customer(customer_id, customer_name)
       return False
@@ -105,11 +95,15 @@ def update_choice(customer_info, customer_choice):
       print('Invalid selection. Please try again.')
     return True
 
-def update_customer_info(field_to_update, new_value, customer_id):
-  sql_update = f"UPDATE Customers SET {field_to_update}=? WHERE customer_id=?"
-  update_values = (new_value, customer_id)
-  cursor.execute(sql_update, update_values)
-  connection.commit()
+def update_customer_info(field_to_update, new_value, customer_id, field_name):
+  try:
+    sql_update = f"UPDATE Customers SET {field_to_update}=? WHERE customer_id=?"
+    update_values = (new_value, customer_id)
+    cursor.execute(sql_update, update_values)
+    connection.commit()
+    print(f'SUCCESS: {field_name} updated!')
+  except:
+    print('- ERROR: Something went wrong. Make sure you did not use the same information as another customer for unique fields. -')
 
 def delete_customer(id, name):
   really_delete = input(f'Are you SURE you want to DELETE Customer {id}:"{name}" (Y/N)? ')
