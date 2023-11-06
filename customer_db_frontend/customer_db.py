@@ -1,6 +1,6 @@
 # To Do:
-# -Add Customer Functionality
 # -Make sure correct responses when incorrect options typed
+# -Bonus- Have activate/deactivate?
 
 import sqlite3
 connection = sqlite3.connect('dp_customers.db')
@@ -10,11 +10,11 @@ def get_customer_info(id):
   try:
     customer_info = cursor.execute("SELECT customer_id, name, street_address, city, state, postal_code, phone, email FROM Customers WHERE customer_id=?", (id,)).fetchone()
     return customer_info
-  except:
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Could not retrieve customer information. -')
     return None
 
 def print_customer_details(customer_info):
-  # try:
   if customer_info:
     print('\n+++ Customer Detail +++\n')
     print(f"{'ID:':>9} {customer_info[0]}")
@@ -27,12 +27,13 @@ def print_customer_details(customer_info):
     print(f"{'Email:':>9} {customer_info[7]}")
   else:
     print('\n--- Invalid customer ID. Please try again ---')
-  # except:
-  #   return False
 
 def get_all_customers():
-  rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers").fetchall()
-  return rows
+  try:
+    rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Customer data could not be loaded. -')
 
 def get_searched_customers(search_str):
   like_search_str = '%' + search_str + '%'
@@ -53,8 +54,8 @@ def print_all_customers():
         row_data.append('None')
     try:
       print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
-    except:
-      print('invalid row')
+    except Exception as e:
+      print(f'\n- ERROR: {e}. Could not print row data for customer -')
 
 def update_choice(customer_info, customer_choice):
   if customer_info:
@@ -107,11 +108,11 @@ def update_customer_info(field_to_update, new_value, customer_id, field_name):
     cursor.execute(sql_update, update_values)
     connection.commit()
     print(f'SUCCESS: {field_name} updated!')
-  except:
-    print('- ERROR: Something went wrong. Make sure you did not use the same information as another customer for unique fields. -')
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Customer data was not updated. -')
 
 def delete_customer(id, name):
-  really_delete = input(f'Are you SURE you want to DELETE Customer {id}:"{name}" (Y/N)? ')
+  really_delete = input(f'\nAre you SURE you want to DELETE Customer {id}:"{name}" (Y/N)? ')
   if really_delete.lower() == 'y':
     sql_delete = "DELETE FROM Customers WHERE customer_id=?"
     cursor.execute(sql_delete, (id,)).fetchone()
@@ -122,12 +123,6 @@ def delete_customer(id, name):
 def view_customers_option():
   print_all_customers()
   select_customer()
-  # customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
-  # while True:
-  #   customer_info = get_customer_info(customer_choice,)
-  #   continue_loop = update_choice(customer_info, customer_choice)
-  #   if not continue_loop:
-  #     break
 
 def search_customers_option():
   search_str = input('\nSearch Term: ')
@@ -142,15 +137,9 @@ def search_customers_option():
         row_data.append('None')
     try:
       print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
-    except:
-      print('invalid row')
+    except Exception as e:
+      print(f'\n- ERROR: {e}. Could not print row data for customer -')
   select_customer()
-  # customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
-  # while True:
-  #   customer_info = get_customer_info(customer_choice,)
-  #   continue_loop = update_choice(customer_info, customer_choice)
-  #   if not continue_loop:
-  #     break
 
 def select_customer():
   customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
@@ -161,7 +150,26 @@ def select_customer():
       break
 
 def add_customer_option():
-  pass
+  print('\nPlease fill out the form below to add a new Customer:\n')
+  field_choices = []
+  field_choices.append(input(f"{'Name:':>9} "))
+  field_choices.append(input(f"{'Address:':>9} "))
+  field_choices.append(input(f"{'City:':>9} "))
+  field_choices.append(input(f"{'State:':>9} "))
+  field_choices.append(input(f"{'Zipcode:':>9} "))
+  field_choices.append(input(f"{'Phone:':>9} "))
+  field_choices.append(input(f"{'Email:':>9} "))
+
+  # name, address, city, state, zipcode, phone, email = field_choices
+
+  insert_sql = "INSERT INTO Customers (name, street_address, city, state, postal_code, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?)"
+
+  try:
+    cursor.execute(insert_sql, field_choices)
+    connection.commit()
+    print(f'\nSUCCESS: Customer "{field_choices[0]}" Successfully added!')
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Customer was not added. -')
 
 while True:
   choice = input('\n**** Customer Database ****\n\n[1] View All Customers\n[2] Search Customers\n[3] Add a New Customer\n[Q] Quit\n\n>>>')
