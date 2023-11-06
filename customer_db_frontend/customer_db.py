@@ -121,12 +121,13 @@ def delete_customer(id, name):
 
 def view_customers_option():
   print_all_customers()
-  customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
-  while True:
-    customer_info = get_customer_info(customer_choice,)
-    continue_loop = update_choice(customer_info, customer_choice)
-    if not continue_loop:
-      break
+  select_customer()
+  # customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
+  # while True:
+  #   customer_info = get_customer_info(customer_choice,)
+  #   continue_loop = update_choice(customer_info, customer_choice)
+  #   if not continue_loop:
+  #     break
 
 def search_customers_option():
   search_str = input('\nSearch Term: ')
@@ -143,6 +144,15 @@ def search_customers_option():
       print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
     except:
       print('invalid row')
+  select_customer()
+  # customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
+  # while True:
+  #   customer_info = get_customer_info(customer_choice,)
+  #   continue_loop = update_choice(customer_info, customer_choice)
+  #   if not continue_loop:
+  #     break
+
+def select_customer():
   customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
   while True:
     customer_info = get_customer_info(customer_choice,)
@@ -150,7 +160,7 @@ def search_customers_option():
     if not continue_loop:
       break
 
-def add_customer():
+def add_customer_option():
   pass
 
 while True:
@@ -160,7 +170,7 @@ while True:
   elif choice == '2':
     search_customers_option()
   elif choice == '3':
-    add_customer
+    add_customer_option()
   elif choice.lower() == 'q':
     break
   else:
