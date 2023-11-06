@@ -1,5 +1,4 @@
 # To Do:
-# -Make sure correct responses when incorrect options typed
 # -Bonus- Have activate/deactivate?
 
 import sqlite3
@@ -98,7 +97,7 @@ def update_choice(customer_info, customer_choice):
     elif edit_customer_choice == '':
       return False
     else:
-      print('Invalid selection. Please try again.')
+      print('- Invalid selection. Please try again. -')
     return True
 
 def update_customer_info(field_to_update, new_value, customer_id, field_name):
@@ -112,13 +111,18 @@ def update_customer_info(field_to_update, new_value, customer_id, field_name):
     print(f'\n- ERROR: {e}. Customer data was not updated. -')
 
 def delete_customer(id, name):
-  really_delete = input(f'\nAre you SURE you want to DELETE Customer {id}:"{name}" (Y/N)? ')
-  if really_delete.lower() == 'y':
-    sql_delete = "DELETE FROM Customers WHERE customer_id=?"
-    cursor.execute(sql_delete, (id,)).fetchone()
-    connection.commit()
-    print(f'SUCCESS: Customer "{name}" successfully Deleted!')
-
+  while True:
+    really_delete = input(f'\nAre you SURE you want to DELETE Customer {id}:"{name}" (Y/N)? ')
+    if really_delete.lower() == 'y':
+      sql_delete = "DELETE FROM Customers WHERE customer_id=?"
+      cursor.execute(sql_delete, (id,)).fetchone()
+      connection.commit()
+      print(f'SUCCESS: Customer "{name}" successfully Deleted!')
+      break
+    elif really_delete.lower() != 'n':
+      print('\n- ERROR: Invalid Response. Please try again. -')
+    else:
+      break
 
 def view_customers_option():
   print_all_customers()
@@ -127,26 +131,35 @@ def view_customers_option():
 def search_customers_option():
   search_str = input('\nSearch Term: ')
   rows = get_searched_customers(search_str)
-  print(f'{"id":<2} {"Name":<25} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
-  for row in rows:
-    row_data = []
-    for i in range(len(row)):
-      if row[i]:
-        row_data.append(row[i])
-      else:
-        row_data.append('None')
-    try:
-      print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
-    except Exception as e:
-      print(f'\n- ERROR: {e}. Could not print row data for customer -')
-  select_customer()
+  if rows:
+    print(f'\n{"id":<2} {"Name":<25} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for customer -')
+    select_customer()
+  else:
+    print(f'\n- No search results found for "{search_str}" -')
 
 def select_customer():
   customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
   while True:
     customer_info = get_customer_info(customer_choice,)
-    continue_loop = update_choice(customer_info, customer_choice)
-    if not continue_loop:
+    if customer_info:
+      continue_loop = update_choice(customer_info, customer_choice)
+      if not continue_loop:
+        break
+    elif customer_choice == '':
+      break
+    else:
+      print('\n- ERROR: Invalid Customer ID. Returning to the Main Menu. -')
       break
 
 def add_customer_option():
@@ -182,4 +195,4 @@ while True:
   elif choice.lower() == 'q':
     break
   else:
-    print('\nPlease enter a valid choice from 1-3, or enter Q to quit.')
+    print('\n- Please enter a valid choice from 1-3, or enter Q to quit. -')
