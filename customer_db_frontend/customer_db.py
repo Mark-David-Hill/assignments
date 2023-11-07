@@ -1,13 +1,16 @@
-# To Do:
-# -Bonus- Have activate/deactivate?
+# Note to Grader:
+# When this is run, it will check if an 'active' column exists in the Customers table. 
+# If not, it will add an 'active' column and set it to True for all entries.
+# To activate an inactive customer, select the corresponding option from the main menu
+# To deactivate an active customer you can do so after viewing all active customers and selecting one to view details for.
 
 import sqlite3
 connection = sqlite3.connect('dp_customers.db')
 cursor = connection.cursor()
 
-def get_customer_info(id):
+def get_customer_info(id, active):
   try:
-    customer_info = cursor.execute("SELECT customer_id, name, street_address, city, state, postal_code, phone, email FROM Customers WHERE customer_id=?", (id,)).fetchone()
+    customer_info = cursor.execute("SELECT customer_id, name, street_address, city, state, postal_code, phone, email FROM Customers WHERE customer_id=? AND active=?", (id, active)).fetchone()
     return customer_info
   except Exception as e:
     print(f'\n- ERROR: {e}. Could not retrieve customer information. -')
@@ -27,22 +30,29 @@ def print_customer_details(customer_info):
   else:
     print('\n--- Invalid customer ID. Please try again ---')
 
-def get_all_customers():
+def get_all_active_customers():
   try:
-    rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers").fetchall()
+    rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers WHERE active=True").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Customer data could not be loaded. -')
+
+def get_all_inactive_customers():
+  try:
+    rows = cursor.execute("SELECT customer_id, name, city, state, phone, email FROM Customers WHERE active=False").fetchall()
     return rows
   except Exception as e:
     print(f'\n- ERROR: {e}. Customer data could not be loaded. -')
 
 def get_searched_customers(search_str):
   like_search_str = '%' + search_str + '%'
-  sql_search = "SELECT customer_id, name, city, state, phone, email FROM Customers WHERE name LIKE ?"
+  sql_search = "SELECT customer_id, name, city, state, phone, email FROM Customers WHERE active = True AND name LIKE ?"
   rows = cursor.execute(sql_search, (like_search_str,)).fetchall()
   return rows
 
-def print_all_customers():
+def print_all_active_customers():
   print('\n--- Customers ---')
-  rows = get_all_customers()
+  rows = get_all_active_customers()
   print(f'{"id":<2} {"Name":<25} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
   for row in rows:
     row_data = []
@@ -56,11 +66,32 @@ def print_all_customers():
     except Exception as e:
       print(f'\n- ERROR: {e}. Could not print row data for customer -')
 
+def print_all_inactive_customers():
+  rows = get_all_inactive_customers()
+  if rows:
+    print('\n--- Inactive Customers ---')
+    print(f'{"id":<2} {"Name":<25} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for customer -')
+    return True
+  else:
+    print(f'\n- There are currently no Inactive Customers -')
+    return False
+
 def update_choice(customer_info, customer_choice):
   if customer_info:
     print_customer_details(customer_info)
     customer_id, customer_name, customer_address, customer_city, customer_state, customer_zipcode, customer_phone, customer_email = customer_info
-    edit_customer_choice = input("\nTo update a field, enter the first letter of the field. \nTo delete this record, type 'DELETE'\nTo return to the main menu, press 'Enter'.\n>>>")
+    edit_customer_choice = input("\nTo update a field, enter the first letter of the field. \nTo delete this record, type 'DELETE'\nTo deactivate this record, type 'DEACTIVATE'\nTo return to the main menu, press 'Enter'.\n>>>")
     if edit_customer_choice.lower() == 'i':
       print('\nThe ID cannot be changed.')
     elif edit_customer_choice.lower() == 'n':
@@ -94,6 +125,9 @@ def update_choice(customer_info, customer_choice):
     elif edit_customer_choice.lower() == 'delete':
       delete_customer(customer_id, customer_name)
       return False
+    elif edit_customer_choice.lower() == 'deactivate':
+      deactivate_customer(customer_id, customer_name)
+      return False
     elif edit_customer_choice == '':
       return False
     else:
@@ -125,7 +159,7 @@ def delete_customer(id, name):
       break
 
 def view_customers_option():
-  print_all_customers()
+  print_all_active_customers()
   select_customer()
 
 def search_customers_option():
@@ -151,7 +185,7 @@ def search_customers_option():
 def select_customer():
   customer_choice = input("\nEnter a Customer ID to View a Customer\nPress 'Enter' to return to Main Menu\n>>>")
   while True:
-    customer_info = get_customer_info(customer_choice,)
+    customer_info = get_customer_info(customer_choice, True)
     if customer_info:
       continue_loop = update_choice(customer_info, customer_choice)
       if not continue_loop:
@@ -174,9 +208,7 @@ def add_customer_option():
   field_choices.append(input(f"{'Email:':>9} "))
 
   # name, address, city, state, zipcode, phone, email = field_choices
-
-  insert_sql = "INSERT INTO Customers (name, street_address, city, state, postal_code, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?)"
-
+  insert_sql = "INSERT INTO Customers (name, street_address, city, state, postal_code, phone, email, active) VALUES (?, ?, ?, ?, ?, ?, ?, True)"
   try:
     cursor.execute(insert_sql, field_choices)
     connection.commit()
@@ -184,15 +216,76 @@ def add_customer_option():
   except Exception as e:
     print(f'\n- ERROR: {e}. Customer was not added. -')
 
+def activate_customer(customer_id):
+  try:
+    sql_update = f"UPDATE Customers SET active=True WHERE customer_id=?"
+    update_values = (customer_id,)
+    cursor.execute(sql_update, update_values)
+    connection.commit()
+    print(f'\nSUCCESS: Customer with ID# {customer_id} set to active!')
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Customer data was not updated. -')
+
+def activate_all_customers():
+  cursor.execute("UPDATE Customers SET active=True")
+  connection.commit()
+
+def activate_customer_option():
+  are_inactive_customers = print_all_inactive_customers()
+  if are_inactive_customers:
+    customer_choice = input("\nEnter a Customer ID to Activate that Customer\nPress 'Enter' to return to Main Menu\n>>>")
+    customer_info = get_customer_info(customer_choice, False)
+    if customer_info:
+      activate_customer(customer_choice)
+    elif customer_choice == '':
+      pass
+    else:
+      print('\n- ERROR: Invalid Customer ID. Returning to the Main Menu. -')
+      
+
+def deactivate_customer(id, name):
+  while True:
+    really_deactivate = input(f'\nAre you SURE you want to Deactivate Customer {id}:"{name}" (Y/N)? ')
+    if really_deactivate.lower() == 'y':
+      sql_deactivate = f"UPDATE Customers SET active=False WHERE customer_id=?"
+      cursor.execute(sql_deactivate, (id,)).fetchone()
+      connection.commit()
+      print(f'SUCCESS: Customer "{name}" successfully Deactivated!')
+      break
+    elif really_deactivate.lower() != 'n':
+      print('\n- ERROR: Invalid Response. Please try again. -')
+    else:
+      break
+
+def check_for_active_column():
+  try:
+    rows = cursor.execute("SELECT active FROM Customers").fetchone()
+    return True
+    # if rows[0][0] == None:
+    #   return False
+    # else:
+    #   return True
+  except:
+    return False
+  
+def add_active_column():
+  cursor.execute('ALTER TABLE Customers ADD active int')
+
+if not check_for_active_column():
+  add_active_column()
+  activate_all_customers()
+
 while True:
-  choice = input('\n**** Customer Database ****\n\n[1] View All Customers\n[2] Search Customers\n[3] Add a New Customer\n[Q] Quit\n\n>>>')
+  choice = input('\n**** Customer Database ****\n\n[1] View All Active Customers\n[2] Search Active Customers\n[3] Add a New Customer\n[4] Activate a Customer\n[Q] Quit\n\n>>>')
   if choice == '1':
     view_customers_option()
   elif choice == '2':
     search_customers_option()
   elif choice == '3':
     add_customer_option()
+  elif choice == '4':
+    activate_customer_option()
   elif choice.lower() == 'q':
     break
   else:
-    print('\n- Please enter a valid choice from 1-3, or enter Q to quit. -')
+    print('\n- Please enter a valid choice from 1-4, or enter Q to quit. -')
