@@ -60,7 +60,19 @@ def create_schema(cursor, tables):
     cursor.execute(table).fetchall()
     connection.commit()
 
-connection = sqlite3.connect('student_database.db')
+connection = sqlite3.connect('school_database.db')
 cursor = connection.cursor()
 
 result = create_schema(cursor, tables_to_create)
+
+print(result)
+
+
+# Get data from .sql file method
+
+# connection = sqlite3.connect('school_database.db')
+# cursor = connection.cursor()
+# sql_file = open("school.sql")
+# sql_as_string = sql_file.read()
+# cursor.executescript(sql_as_string)
+# connection.commit
