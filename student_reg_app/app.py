@@ -2,6 +2,11 @@
 # python3 -m pipenv shell
 # cd <directory>
 # python3 app.py
+
+# To do: 
+# -Implement options for Cohort and Course things
+# -Fix current menu setup- q only works if in main menu
+
 import sqlite3
 connection = sqlite3.connect('school_database.db')
 cursor = connection.cursor()
@@ -84,8 +89,27 @@ def complete_course():
 def reactivate_course():
   print('Reactivate Course!')
 
-def reactivate_person():
-  print('Reactivate Person!')
+def reactivate_person(person_id):
+  try:
+    sql_update = f"UPDATE People SET active=True WHERE person_id=?"
+    update_values = (person_id,)
+    cursor.execute(sql_update, update_values)
+    connection.commit()
+    print(f'\nSUCCESS: Person with ID# {person_id} set to active!')
+  except Exception as e:
+    print(f"\n- ERROR: {e}. Person's data was not updated. -")
+
+def reactivate_person_option():
+  are_inactive_people = view_inactive_people()
+  if are_inactive_people:
+    person_choice = input("\nEnter a Person's ID to Activate that Person\nPress 'Enter' to return to the previous menu\n>>>")
+    person_info = get_person_info(person_choice, False)
+    if person_info:
+      reactivate_person(person_choice)
+    elif person_choice == '':
+      pass
+    else:
+      print('\n- ERROR: Invalid Person ID. Returning to the Main Menu. -')
 
 def reactivate_cohort():
   print('Reactivate Cohort!')
@@ -104,6 +128,13 @@ def view_active_course_cohorts():
 def get_all_active_people():
   try:
     rows = cursor.execute("SELECT person_id, first_name, last_name, city, state, phone, email FROM People WHERE active=True").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Customer data could not be loaded. -')
+
+def get_all_inactive_people():
+  try:
+    rows = cursor.execute("SELECT person_id, first_name, last_name, city, state, phone, email FROM People WHERE active=False").fetchall()
     return rows
   except Exception as e:
     print(f'\n- ERROR: {e}. Customer data could not be loaded. -')
@@ -130,20 +161,44 @@ def update_person_info(field_to_update, new_value, person_id, field_name):
 def view_active_people():
   print('\n--- People ---')
   rows = get_all_active_people()
-  print(f'{"id":<2} {"First Name":<12} {"Last Name":<12} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
-  for row in rows:
-    row_data = []
-    for i in range(len(row)):
-      if row[i]:
-        row_data.append(row[i])
-      else:
-        row_data.append('None')
-    try:
-      print(f'{row_data[0]:<2} {row_data[1]:<12} {row_data[2]:<12} {row_data[3]:<20} {row_data[4]:<10} {row_data[5]:<15} {row_data[6]:<25}')
-    except Exception as e:
-      print(f'\n- ERROR: {e}. Could not print row data for customer -')
+  if rows:
+    print(f'{"id":<2} {"First Name":<12} {"Last Name":<12} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<12} {row_data[2]:<12} {row_data[3]:<20} {row_data[4]:<10} {row_data[5]:<15} {row_data[6]:<25}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for customer -')
+    select_person()
+  else:
+    print(f'\n- There are currently no Active Customers -')
+    return False
 
-  select_person()
+def view_inactive_people():
+  rows = get_all_inactive_people()
+  if rows:
+    print('\n--- Inactive People ---')
+    print(f'{"id":<2} {"First Name":<12} {"Last Name":<12} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<12} {row_data[2]:<12} {row_data[3]:<20} {row_data[4]:<10} {row_data[5]:<15} {row_data[6]:<25}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for customer -')
+    return True
+  else:
+    print(f'\n- There are currently no Inactive Customers -')
+    return False
 
 def select_person():
   person_choice = input("\nEnter a Person ID to View the Person's information\nPress 'Enter' to return to Main Menu\n>>>")
@@ -234,27 +289,6 @@ def update_choice(person_info, person_choice):
       print('- Invalid selection. Please try again. -')
     return True
 
-# def print_all_inactive_customers():
-#   rows = get_all_inactive_customers()
-#   if rows:
-#     print('\n--- Inactive Customers ---')
-#     print(f'{"id":<2} {"Name":<25} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
-#     for row in rows:
-#       row_data = []
-#       for i in range(len(row)):
-#         if row[i]:
-#           row_data.append(row[i])
-#         else:
-#           row_data.append('None')
-#       try:
-#         print(f'{row_data[0]:<2} {row_data[1]:<25} {row_data[2]:<20} {row_data[3]:<10} {row_data[4]:<15} {row_data[5]:<25}')
-#       except Exception as e:
-#         print(f'\n- ERROR: {e}. Could not print row data for customer -')
-#     return True
-#   else:
-#     print(f'\n- There are currently no Inactive Customers -')
-#     return False
-
 # Any other views you think might be helpful to the user.
 
 main_menu = {
@@ -262,7 +296,7 @@ main_menu = {
   "\n*** Welcome to School University's Student Registration App! ***\n\n1. Student and Teacher Menu": {
     '\n--- Student and Teacher Menu ---\n\n1. View Active People': view_active_people,
     '2. Register a Person': create_person,
-    '3. Reactivate a Person': reactivate_person
+    '3. Reactivate a Person': reactivate_person_option
   },
   '2. Cohort Menu': {
     '\n--- Cohort Menu ---\n1. View Active Cohorts': view_active_cohort_registrations,
