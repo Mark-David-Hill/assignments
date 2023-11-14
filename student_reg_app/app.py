@@ -4,8 +4,9 @@
 # python3 app.py
 
 # To do: 
-# -Implement options for Cohort and Course things
-# -Fix current menu setup- q only works if in main menu
+# -Implement options for Cohort Menus
+# -Implement options for Course Menus
+# -Make sure all requirements are met
 
 import sqlite3
 connection = sqlite3.connect('school_database.db')
@@ -315,6 +316,7 @@ def display_menu(menu):
     print(key)
   
 def run_menu(menu):
+  quit_pending = False
   while True:
     is_main_menu = False
     menu_options = list(menu.keys())
@@ -326,9 +328,9 @@ def run_menu(menu):
     choice = input("\nPlease choose an option from the menu above, 'q' to quit, or press 'enter' to return to the previous menu: ")
     if choice.lower() == 'q':
       print('\n - Goodbye! -')
-      break
+      return True
     elif choice == '' and not is_main_menu:
-      return None
+      return False
     elif choice == '' and is_main_menu:
       pass
     elif choice in choices:
@@ -337,8 +339,10 @@ def run_menu(menu):
           if callable(actions[i]):
             actions[i]()
           else:
-            run_menu(actions[i])
+            quit_pending = run_menu(actions[i])
     else:
       print("\nSorry, I didn't understand your selection. Please enter a valid number from 1-3.")
+    if quit_pending == True:
+      break
 
 run_menu(main_menu)
