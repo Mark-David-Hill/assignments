@@ -12,7 +12,8 @@ import sqlite3
 connection = sqlite3.connect('school_database.db')
 cursor = connection.cursor()
 
-# Create a Person record
+# Person Functionality
+
 def create_person():
   print('\nPlease fill out the form below to add a new Person:\n')
   field_choices = []
@@ -34,56 +35,6 @@ def create_person():
   except Exception as e:
     print(f'\n- ERROR: {e}. Person was not added. -')
 
-# Create a Course record (A course is a Class)
-def create_course():
-  print('\nPlease fill out the form below to add a new Course:\n')
-  field_choices = []
-  field_choices.append(input(f"{'Course Name:':>9} "))
-  field_choices.append(input(f"{'Course Description:':>9} "))
-
-  insert_sql = "INSERT INTO Courses (name, description, active) VALUES (?, ?, True)"
-  try:
-    cursor.execute(insert_sql, field_choices)
-    connection.commit()
-    print(f'\nSUCCESS: Course "{field_choices[0]}" Successfully added!')
-  except Exception as e:
-    print(f'\n- ERROR: {e}. Course was not added. -')
-
-# Create a Cohort. The user must select:
-# A. an existing Person as an instructor
-# B. an existing Course as the course'
-def create_cohort():
-  print('Create Cohort!')
-
-# Assign a Student to a Cohort. The user must select:
-# A. An existing Person as the student
-# B. An existing Cohort as the cohort
-def assign_to_cohort():
-  print('Assign to Cohort!')
-
-# Remove a Student from a Cohort
-# A. This should just set the Student_Cohort_Registration record as active = 0 AND set the drop_date to today
-def remove_from_cohort():
-  print('Remove from Cohort!')
-
-
-# Deactivate a Course (It can no longer be selected for a new Cohort)\
-def deactivate_course(id, name):
-  while True:
-    really_deactivate = input(f'\nAre you SURE you want to Deactivate Course {id}:"{name}" (Y/N)? ')
-    if really_deactivate.lower() == 'y':
-      sql_deactivate = f"UPDATE Courses SET active=False WHERE course_id=?"
-      cursor.execute(sql_deactivate, (id,)).fetchone()
-      connection.commit()
-      print(f'SUCCESS: "{name}" successfully Deactivated!')
-      break
-    elif really_deactivate.lower() != 'n':
-      print('\n- ERROR: Invalid Response. Please try again. -')
-    else:
-      break
-
-
-# Deactivate a Person (They can no longer be selected for new Registrations or as an instructor for a Cohort)
 def deactivate_person(id, first_name, last_name):
   while True:
     really_deactivate = input(f'\nAre you SURE you want to Deactivate Person {id}:"{first_name} {last_name}" (Y/N)? ')
@@ -97,39 +48,6 @@ def deactivate_person(id, first_name, last_name):
       print('\n- ERROR: Invalid Response. Please try again. -')
     else:
       break
-
-
-# Deactivate a Cohort (They can no longer be selected for new student registrations)
-def deactivate_cohort():
-  print('Deactivate Cohort!')
-
-
-# Complete a Course for a Student. This will set the completion date on the Student_Cohort_Registration.
-def complete_course():
-  print('Complete Course!')
-
-# Reactivate Course, Person, Cohort, Student_Cohort_Registration
-def reactivate_course(id):
-  try:
-    sql_update = f"UPDATE Courses SET active=True WHERE course_id=?"
-    update_values = (id,)
-    cursor.execute(sql_update, update_values)
-    connection.commit()
-    print(f'\nSUCCESS: Course with ID# {id} set to active!')
-  except Exception as e:
-    print(f"\n- ERROR: {e}. Person's data was not updated. -")
-
-def reactivate_course_option():
-  are_inactive_courses = view_inactive_courses()
-  if are_inactive_courses:
-    course_choice = input("\nEnter a Course's ID to Activate that Course\nPress 'Enter' to return to the previous menu\n>>>")
-    course_info = get_course_info(course_choice, False)
-    if course_info:
-      reactivate_course(course_choice)
-    elif course_choice == '':
-      pass
-    else:
-      print('\n- ERROR: Invalid Course ID. Returning to the previous menu. -')
 
 def reactivate_person(person_id):
   try:
@@ -153,38 +71,6 @@ def reactivate_person_option():
     else:
       print('\n- ERROR: Invalid Person ID. Returning to the previous menu. -')
 
-def reactivate_cohort():
-  print('Reactivate Cohort!')
-
-def reactivate_student_cohort_registration():
-  print('Reactivate Student Cohort!')
-
-# View active registrations for a cohort
-def view_active_cohort_registrations():
-  print('View Active Cohort Registrations!')
-
-# View active cohorts for a course
-def view_active_courses():
-  print('\n--- Courses ---')
-  rows = get_all_active_courses()
-  if rows:
-    print(f'{"id":<2} {"Name":<20} {"Description":<35}')
-    for row in rows:
-      row_data = []
-      for i in range(len(row)):
-        if row[i]:
-          row_data.append(row[i])
-        else:
-          row_data.append('None')
-      try:
-        print(f'{row_data[0]:<2} {row_data[1]:<20} {row_data[2]:<35}')
-      except Exception as e:
-        print(f'\n- ERROR: {e}. Could not print row data for course -')
-  else:
-    print(f'\n- There are currently no Active Courses -')
-    return False
-  deactivate_course_prompt()
-
 def get_all_active_people():
   try:
     rows = cursor.execute("SELECT person_id, first_name, last_name, city, state, phone, email FROM People WHERE active=True").fetchall()
@@ -199,20 +85,6 @@ def get_all_inactive_people():
   except Exception as e:
     print(f'\n- ERROR: {e}. Person data could not be loaded. -')
 
-def get_all_active_courses():
-  try:
-    rows = cursor.execute("SELECT course_id, name, description FROM Courses WHERE active=True").fetchall()
-    return rows
-  except Exception as e:
-    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
-
-def get_all_inactive_courses():
-  try:
-    rows = cursor.execute("SELECT course_id, name, description FROM Courses WHERE active=False").fetchall()
-    return rows
-  except Exception as e:
-    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
-
 def get_person_info(id, active):
   try:
     person_info = cursor.execute("SELECT person_id, first_name, last_name, address, city, state, postal_code, phone, email, password FROM People WHERE person_id=? AND active=?", (id, active)).fetchone()
@@ -220,15 +92,8 @@ def get_person_info(id, active):
   except Exception as e:
     print(f'\n- ERROR: {e}. Could not retrieve person information. -')
     return None
-  
-def get_course_info(id, active):
-  try:
-    course_info = cursor.execute("SELECT course_id, name, description FROM Courses WHERE course_id=? AND active=?", (id, active)).fetchone()
-    return course_info
-  except Exception as e:
-    print(f'\n- ERROR: {e}. Could not retrieve course information. -')
-    return None
-  
+
+
 def update_person_info(field_to_update, new_value, person_id, field_name):
   try:
     sql_update = f"UPDATE People SET {field_to_update}=? WHERE person_id=?"
@@ -239,7 +104,6 @@ def update_person_info(field_to_update, new_value, person_id, field_name):
   except Exception as e:
     print(f'\n- ERROR: {e}. Person data was not updated. -')
 
-# View all active people
 def view_active_people():
   print('\n--- People ---')
   rows = get_all_active_people()
@@ -282,27 +146,6 @@ def view_inactive_people():
     print(f'\n- There are currently no Inactive People -')
     return False
   
-def view_inactive_courses():
-  rows = get_all_inactive_courses()
-  if rows:
-    print('\n--- Inactive Courses ---')
-    print(f'{"id":<2} {"Name":<20} {"Description":<35}')
-    for row in rows:
-      row_data = []
-      for i in range(len(row)):
-        if row[i]:
-          row_data.append(row[i])
-        else:
-          row_data.append('None')
-      try:
-        print(f'{row_data[0]:<2} {row_data[1]:<20} {row_data[2]:<35}')
-      except Exception as e:
-        print(f'\n- ERROR: {e}. Could not print row data for course -')
-    return True
-  else:
-    print(f'\n- There are currently no Inactive Courses -')
-    return False
-
 def select_person():
   person_choice = input("\nEnter a Person ID to View the Person's information\nPress 'Enter' to the previous menu\n>>>")
   while True:
@@ -316,16 +159,6 @@ def select_person():
     else:
       print('\n- ERROR: Invalid Person ID. Returning to the Previous Menu. -')
       break
-
-def deactivate_course_prompt():
-  course_choice = input("\nIf you would like to deactivate a course, please enter its ID\nor press 'Enter' to return to the previous menu: ")
-  course_info = get_course_info(course_choice, True)
-  if course_info:
-    deactivate_course(course_info[0], course_info[1])
-  elif course_choice == '':
-    pass
-  else:
-    print('\n- ERROR: Invalid Course ID. Returning to the Previous Menu. -')
 
 def print_person_details(person_info):
   if person_info:
@@ -342,8 +175,6 @@ def print_person_details(person_info):
     # print(f"{'Password:':>9} {person_info[9]}")
   else:
     print('\n--- Invalid person ID. Please try again ---')
-
-# person_id, first_name, last_name, address, city, state, postal_code, phone, email, password
 
 def update_choice(person_info, person_choice):
   pass
@@ -402,7 +233,194 @@ def update_choice(person_info, person_choice):
       print('- Invalid selection. Please try again. -')
     return True
 
+
+
+
+
+
+# Course Functionality
+
+def create_course():
+  print('\nPlease fill out the form below to add a new Course:\n')
+  field_choices = []
+  field_choices.append(input(f"{'Course Name:':>9} "))
+  field_choices.append(input(f"{'Course Description:':>9} "))
+
+  insert_sql = "INSERT INTO Courses (name, description, active) VALUES (?, ?, True)"
+  try:
+    cursor.execute(insert_sql, field_choices)
+    connection.commit()
+    print(f'\nSUCCESS: Course "{field_choices[0]}" Successfully added!')
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Course was not added. -')
+
+def deactivate_course(id, name):
+  while True:
+    really_deactivate = input(f'\nAre you SURE you want to Deactivate Course {id}:"{name}" (Y/N)? ')
+    if really_deactivate.lower() == 'y':
+      sql_deactivate = f"UPDATE Courses SET active=False WHERE course_id=?"
+      cursor.execute(sql_deactivate, (id,)).fetchone()
+      connection.commit()
+      print(f'SUCCESS: "{name}" successfully Deactivated!')
+      break
+    elif really_deactivate.lower() != 'n':
+      print('\n- ERROR: Invalid Response. Please try again. -')
+    else:
+      break
+
+def reactivate_course(id):
+  try:
+    sql_update = f"UPDATE Courses SET active=True WHERE course_id=?"
+    update_values = (id,)
+    cursor.execute(sql_update, update_values)
+    connection.commit()
+    print(f'\nSUCCESS: Course with ID# {id} set to active!')
+  except Exception as e:
+    print(f"\n- ERROR: {e}. Person's data was not updated. -")
+
+def reactivate_course_option():
+  are_inactive_courses = view_inactive_courses()
+  if are_inactive_courses:
+    course_choice = input("\nEnter a Course's ID to Activate that Course\nPress 'Enter' to return to the previous menu\n>>>")
+    course_info = get_course_info(course_choice, False)
+    if course_info:
+      reactivate_course(course_choice)
+    elif course_choice == '':
+      pass
+    else:
+      print('\n- ERROR: Invalid Course ID. Returning to the previous menu. -')
+
+def view_active_courses():
+  print('\n--- Courses ---')
+  rows = get_all_active_courses()
+  if rows:
+    print(f'{"id":<2} {"Name":<20} {"Description":<35}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<20} {row_data[2]:<35}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for course -')
+  else:
+    print(f'\n- There are currently no Active Courses -')
+    return False
+  deactivate_course_prompt()
+
+def get_all_active_courses():
+  try:
+    rows = cursor.execute("SELECT course_id, name, description FROM Courses WHERE active=True").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+
+def get_all_inactive_courses():
+  try:
+    rows = cursor.execute("SELECT course_id, name, description FROM Courses WHERE active=False").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+
+def get_course_info(id, active):
+  try:
+    course_info = cursor.execute("SELECT course_id, name, description FROM Courses WHERE course_id=? AND active=?", (id, active)).fetchone()
+    return course_info
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Could not retrieve course information. -')
+    return None
+  
+def view_inactive_courses():
+  rows = get_all_inactive_courses()
+  if rows:
+    print('\n--- Inactive Courses ---')
+    print(f'{"id":<2} {"Name":<20} {"Description":<35}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<20} {row_data[2]:<35}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for course -')
+    return True
+  else:
+    print(f'\n- There are currently no Inactive Courses -')
+    return False
+  
+def deactivate_course_prompt():
+  course_choice = input("\nIf you would like to deactivate a course, please enter its ID\nor press 'Enter' to return to the previous menu: ")
+  course_info = get_course_info(course_choice, True)
+  if course_info:
+    deactivate_course(course_info[0], course_info[1])
+  elif course_choice == '':
+    pass
+  else:
+    print('\n- ERROR: Invalid Course ID. Returning to the Previous Menu. -')
+
+
+# Cohort Functionality
+
+# View Active Cohorts
+
+# Create a Cohort. The user must select:
+# A. an existing Person as an instructor
+# B. an existing Course as the course'
+def create_cohort():
+  print('Create Cohort!')
+
+# Deactivate a Cohort (They can no longer be selected for new student registrations)
+def deactivate_cohort():
+  print('Deactivate Cohort!')
+
+def reactivate_cohort():
+  print('Reactivate Cohort!')
+
+
+
+
+
+
+
+# Student Cohort Registration Functionality
+
+# Assign a Student to a Cohort. The user must select:
+# A. An existing Person as the student
+# B. An existing Cohort as the cohort
+def assign_to_cohort():
+  print('Assign to Cohort!')
+
+# Remove a Student from a Cohort
+# A. This should just set the Student_Cohort_Registration record as active = 0 AND set the drop_date to today
+def remove_from_cohort():
+  print('Remove from Cohort!')
+
+# Complete a Course for a Student. This will set the completion date on the Student_Cohort_Registration.
+def complete_course():
+  print('Complete Course!')
+
+def reactivate_student_cohort_registration():
+  print('Reactivate Student Cohort!')
+
+# View active registrations for a cohort
+def view_active_cohort_registrations():
+  print('View Active Cohort Registrations!')
+
+# View active cohorts for a course
 # Any other views you think might be helpful to the user.
+
+
+
+
+
+
+
 
 main_menu = {
   
@@ -412,12 +430,12 @@ main_menu = {
     '3. Reactivate a Person': reactivate_person_option
   },
   '2. Course Menu': {
-    '\n--- Course Menu ---\n1. View Active Courses': view_active_courses,
+    '\n--- Course Menu ---\n\n1. View Active Courses': view_active_courses,
     '2. Register a Course': create_course,
     '3. Reactivate a Course': reactivate_course_option
   },
   '3. Cohort Menu': {
-    '\n--- Cohort Menu ---\n1. View Active Cohorts': view_active_cohort_registrations,
+    '\n--- Cohort Menu ---\n\n1. View Active Cohorts': view_active_cohort_registrations,
     '2. Register a Cohort': create_cohort,
     '3. Reactivate a Cohort': reactivate_cohort
   }
