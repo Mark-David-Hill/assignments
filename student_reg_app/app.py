@@ -8,6 +8,7 @@
 # -Check on things for Student Cohort Registrations
 # -Make sure all requirements are met
 
+from datetime import datetime
 import sqlite3
 connection = sqlite3.connect('school_database.db')
 cursor = connection.cursor()
@@ -105,6 +106,26 @@ def update_person_info(field_to_update, new_value, person_id, field_name):
     print(f'\n- ERROR: {e}. Person data was not updated. -')
 
 def view_active_people():
+  print('\n--- People ---')
+  rows = get_all_active_people()
+  if rows:
+    print(f'{"id":<2} {"First Name":<12} {"Last Name":<12} {"City":<20} {"State":<10} {"Phone":<15} {"Email":<25}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<12} {row_data[2]:<12} {row_data[3]:<20} {row_data[4]:<10} {row_data[5]:<15} {row_data[6]:<25}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for person -')
+  else:
+    print(f'\n- There are currently no Active People -')
+    return False
+
+def view_active_people_and_update():
   print('\n--- People ---')
   rows = get_all_active_people()
   if rows:
@@ -309,6 +330,26 @@ def view_active_courses():
   else:
     print(f'\n- There are currently no Active Courses -')
     return False
+
+def view_active_courses_and_deactivate():
+  print('\n--- Courses ---')
+  rows = get_all_active_courses()
+  if rows:
+    print(f'{"id":<2} {"Name":<20} {"Description":<35}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1]:<20} {row_data[2]:<35}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for course -')
+  else:
+    print(f'\n- There are currently no Active Courses -')
+    return False
   deactivate_course_prompt()
 
 def get_all_active_courses():
@@ -364,16 +405,78 @@ def deactivate_course_prompt():
   else:
     print('\n- ERROR: Invalid Course ID. Returning to the Previous Menu. -')
 
+# In view courses menu give option to view active cohorts for a course.
+
+
+
+
 
 # Cohort Functionality
 
 # View Active Cohorts
+def view_active_cohorts():
+  print('\n--- Cohorts ---')
+  rows = get_all_active_cohorts()
+  if rows:
+    print(f'{"id":<2} {"Instructor":<18} {"Course":<18} {"Start Date":<24} {"End Date":<24}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[1] + " " + row_data[2]:<18} {row_data[3]:<18} {row_data[4]:<24} {row_data[5]:<24}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for cohorts -')
+  else:
+    print(f'\n- There are currently no Active Cohorts -')
+    return False
+  # deactivate_course_prompt()
 
-# Create a Cohort. The user must select:
-# A. an existing Person as an instructor
-# B. an existing Course as the course'
+# SELECT c.cohort_id, p.first_name, p.last_name, cour.name, c.start_date, c.end_date
+# FROM Cohorts c
+# JOIN People p
+# ON p.person_id = c.instructor_id
+# JOIN Courses cour
+# ON cour.course_id = c.course_id
+
+def get_all_active_cohorts():
+  try:
+    rows = cursor.execute("SELECT c.cohort_id, p.first_name, p.last_name, cour.name, c.start_date, c.end_date FROM Cohorts c JOIN People p ON p.person_id = c.instructor_id JOIN Courses cour ON cour.course_id = c.course_id WHERE c.active=True").fetchall()
+    # rows = cursor.execute("SELECT cohort_id, instructor_id, course_id, start_date, end_date FROM Cohorts WHERE active=True").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+
+def get_all_inactive_cohorts():
+  try:
+    rows = cursor.execute("SELECT c.cohort_id, p.first_name, p.last_name, cour.name, c.start_date, c.end_date FROM Cohorts c JOIN People p ON p.person_id = c.instructor_id JOIN Courses cour ON cour.course_id = c.course_id WHERE c.active=False").fetchall()
+    # rows = cursor.execute("SELECT cohort_id, instructor_id, course_id, start_date, end_date FROM Cohorts WHERE active=True").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+
 def create_cohort():
-  print('Create Cohort!')
+  print('\nPlease fill out the form below to add a new Cohort:\n')
+  field_choices = []
+  view_active_people()
+  field_choices.append(input('\nPlease enter the id of the person you would like to be the Cohort Instructor: '))
+  view_active_courses()
+  field_choices.append(input('\nPlease enter the id of the course you would like to create a Cohort for: '))
+  current_date_time = datetime.now()
+  date_str = current_date_time.strftime("%Y/%m/%d %H:%M:%S")
+  field_choices.append(date_str)
+  field_choices.append(input('\nPlease enter the end date for this course (YYYY-MM-DD hh:mm:ss): '))
+
+  insert_sql = "INSERT INTO Cohorts (instructor_id, course_id, start_date, end_date, active) VALUES (?, ?, ?, ?, True)"
+  try:
+    cursor.execute(insert_sql, field_choices)
+    connection.commit()
+    print(f'\nSUCCESS: Cohort "{field_choices[0]}" Successfully added!')
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Cohort was not added. -')
 
 # Deactivate a Cohort (They can no longer be selected for new student registrations)
 def deactivate_cohort():
@@ -381,6 +484,8 @@ def deactivate_cohort():
 
 def reactivate_cohort():
   print('Reactivate Cohort!')
+
+# In view cohort menu, give options to View active registrations for a cohort
 
 
 
@@ -402,7 +507,7 @@ def remove_from_cohort():
   print('Remove from Cohort!')
 
 # Complete a Course for a Student. This will set the completion date on the Student_Cohort_Registration.
-def complete_course():
+def complete_course(student_id):
   print('Complete Course!')
 
 def reactivate_student_cohort_registration():
@@ -425,21 +530,26 @@ def view_active_cohort_registrations():
 main_menu = {
   
   "\n*** Welcome to School University's Student Registration App! ***\n\n1. Student and Teacher Menu": {
-    '\n--- Student and Teacher Menu ---\n\n1. View Active People': view_active_people,
+    '\n--- Student and Teacher Menu ---\n\n1. View Active People': view_active_people_and_update,
     '2. Register a Person': create_person,
     '3. Reactivate a Person': reactivate_person_option
   },
   '2. Course Menu': {
-    '\n--- Course Menu ---\n\n1. View Active Courses': view_active_courses,
+    '\n--- Course Menu ---\n\n1. View Active Courses': view_active_courses_and_deactivate,
     '2. Register a Course': create_course,
     '3. Reactivate a Course': reactivate_course_option
   },
   '3. Cohort Menu': {
-    '\n--- Cohort Menu ---\n\n1. View Active Cohorts': view_active_cohort_registrations,
+    '\n--- Cohort Menu ---\n\n1. View Active Cohorts': view_active_cohorts,
     '2. Register a Cohort': create_cohort,
     '3. Reactivate a Cohort': reactivate_cohort
+  },
+  '4. Student Cohort Registration Menu': {
+    '\n--- Student Cohort Registration Menu ---\n\n1. View Active Cohort Registrations': view_active_cohort_registrations,
+    '2. Reactivate Cohort Registration': reactivate_student_cohort_registration
   }
 }
+# assign and remove students from here, also complete courses. Also deactivate
 
 def display_menu(menu):
   for key, value in menu.items():
