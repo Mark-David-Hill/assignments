@@ -6,6 +6,7 @@
 # To do: 
 # -Implement options for Cohort Menus
 # -Check on things for Student Cohort Registrations
+# -Make menu work regardless of number of options
 # -Make sure all requirements are met
 
 from datetime import datetime
@@ -418,7 +419,7 @@ def view_active_cohorts():
   print('\n--- Cohorts ---')
   rows = get_all_active_cohorts()
   if rows:
-    print(f'{"id":<2} {"Instructor":<18} {"Course":<18} {"Start Date":<24} {"End Date":<24}')
+    print(f'{"id":<2} {"Course":<18} {"Instructor":<18} {"Start Date":<24} {"End Date":<24}')
     for row in rows:
       row_data = []
       for i in range(len(row)):
@@ -427,13 +428,34 @@ def view_active_cohorts():
         else:
           row_data.append('None')
       try:
-        print(f'{row_data[0]:<2} {row_data[1] + " " + row_data[2]:<18} {row_data[3]:<18} {row_data[4]:<24} {row_data[5]:<24}')
+        print(f'{row_data[0]:<2} {row_data[3]:<18} {row_data[1] + " " + row_data[2]:<18} {row_data[4]:<24} {row_data[5]:<24}')
       except Exception as e:
         print(f'\n- ERROR: {e}. Could not print row data for cohorts -')
   else:
     print(f'\n- There are currently no Active Cohorts -')
     return False
-  # deactivate_course_prompt()
+  deactivate_cohort_prompt()
+
+def view_inactive_cohorts():
+  print('\n--- Cohorts ---')
+  rows = get_all_inactive_cohorts()
+  if rows:
+    print(f'{"id":<2} {"Course":<18} {"Instructor":<18} {"Start Date":<24} {"End Date":<24}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<2} {row_data[3]:<18} {row_data[1] + " " + row_data[2]:<18} {row_data[4]:<24} {row_data[5]:<24}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for cohorts -')
+    return True
+  else:
+    print(f'\n- There are currently no Active Cohorts -')
+    return False
 
 # SELECT c.cohort_id, p.first_name, p.last_name, cour.name, c.start_date, c.end_date
 # FROM Cohorts c
@@ -447,6 +469,15 @@ def get_all_active_cohorts():
     rows = cursor.execute("SELECT c.cohort_id, p.first_name, p.last_name, cour.name, c.start_date, c.end_date FROM Cohorts c JOIN People p ON p.person_id = c.instructor_id JOIN Courses cour ON cour.course_id = c.course_id WHERE c.active=True").fetchall()
     # rows = cursor.execute("SELECT cohort_id, instructor_id, course_id, start_date, end_date FROM Cohorts WHERE active=True").fetchall()
     return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+
+def get_cohort_info(id, active):
+  try:
+    if id == '':
+      return None
+    row = cursor.execute("SELECT c.cohort_id, p.first_name, p.last_name, cour.name, c.start_date, c.end_date FROM Cohorts c JOIN People p ON p.person_id = c.instructor_id JOIN Courses cour ON cour.course_id = c.course_id WHERE c.cohort_id=? AND c.active=?", (id, active)).fetchone()
+    return row
   except Exception as e:
     print(f'\n- ERROR: {e}. Course data could not be loaded. -')
 
@@ -474,18 +505,58 @@ def create_cohort():
   try:
     cursor.execute(insert_sql, field_choices)
     connection.commit()
-    print(f'\nSUCCESS: Cohort "{field_choices[0]}" Successfully added!')
+    print(f'\nSUCCESS: Cohort Successfully added!')
   except Exception as e:
     print(f'\n- ERROR: {e}. Cohort was not added. -')
 
-# Deactivate a Cohort (They can no longer be selected for new student registrations)
-def deactivate_cohort():
-  print('Deactivate Cohort!')
-
-def reactivate_cohort():
-  print('Reactivate Cohort!')
-
 # In view cohort menu, give options to View active registrations for a cohort
+def deactivate_cohort(id, cohort_name):
+  while True:
+    really_deactivate = input(f'\nAre you SURE you want to Deactivate Cohort {id}:"{cohort_name}" (Y/N)? ')
+    if really_deactivate.lower() == 'y':
+      sql_deactivate = f"UPDATE Cohorts SET active=False WHERE cohort_id=?"
+      cursor.execute(sql_deactivate, (id,)).fetchone()
+      connection.commit()
+      print(f'SUCCESS: "{cohort_name}" Cohort successfully Deactivated!')
+      break
+    elif really_deactivate.lower() != 'n':
+      print('\n- ERROR: Invalid Response. Please try again. -')
+    else:
+      break
+
+# Deactivate a Cohort (They can no longer be selected for new student registrations)
+def deactivate_cohort_prompt():
+  cohort_choice = input("\nIf you would like to deactivate a cohort, please enter its ID\nor press 'Enter' to return to the previous menu: ")
+  cohort_info = get_cohort_info(cohort_choice, True)
+  if cohort_info:
+    deactivate_cohort(cohort_choice, cohort_info[3])
+  elif cohort_choice == '':
+    pass
+  else:
+    print('\n- ERROR: Invalid Course ID. Returning to the Previous Menu. -')
+
+def reactivate_cohort(cohort_id):
+  try:
+    sql_update = f"UPDATE Cohorts SET active=True WHERE cohort_id=?"
+    update_values = (cohort_id,)
+    cursor.execute(sql_update, update_values)
+    connection.commit()
+    print(f'\nSUCCESS: Cohort with ID# {cohort_id} set to active!')
+  except Exception as e:
+    print(f"\n- ERROR: {e}. Cohort's data was not updated. -")
+
+def reactivate_cohort_option():
+  are_inactive_cohorts = view_inactive_cohorts()
+  if are_inactive_cohorts:
+    cohort_choice = input("\nEnter a Cohort's ID to Activate that Cohort\nPress 'Enter' to return to the previous menu\n>>>")
+    cohort_info = get_cohort_info(cohort_choice, False)
+    if cohort_info:
+      reactivate_cohort(cohort_choice)
+    elif cohort_choice == '':
+      pass
+    else:
+      print('\n- ERROR: Invalid Cohort ID. Returning to the previous menu. -')
+
 
 
 
@@ -509,6 +580,8 @@ def remove_from_cohort():
 # Complete a Course for a Student. This will set the completion date on the Student_Cohort_Registration.
 def complete_course(student_id):
   print('Complete Course!')
+
+
 
 def reactivate_student_cohort_registration():
   print('Reactivate Student Cohort!')
@@ -542,7 +615,7 @@ main_menu = {
   '3. Cohort Menu': {
     '\n--- Cohort Menu ---\n\n1. View Active Cohorts': view_active_cohorts,
     '2. Register a Cohort': create_cohort,
-    '3. Reactivate a Cohort': reactivate_cohort
+    '3. Reactivate a Cohort': reactivate_cohort_option
   },
   '4. Student Cohort Registration Menu': {
     '\n--- Student Cohort Registration Menu ---\n\n1. View Active Cohort Registrations': view_active_cohort_registrations,
