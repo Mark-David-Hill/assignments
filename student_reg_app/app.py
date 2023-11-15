@@ -6,7 +6,6 @@
 # To do: 
 # -Implement options for Cohort Menus
 # -Check on things for Student Cohort Registrations
-# -Make menu work regardless of number of options
 # -Make sure all requirements are met
 
 from datetime import datetime
@@ -94,7 +93,6 @@ def get_person_info(id, active):
   except Exception as e:
     print(f'\n- ERROR: {e}. Could not retrieve person information. -')
     return None
-
 
 def update_person_info(field_to_update, new_value, person_id, field_name):
   try:
@@ -635,7 +633,9 @@ def run_menu(menu):
     menu_options = list(menu.keys())
     if menu_options[0][2] == '*':
       is_main_menu = True
-    choices = ['1', '2', '3']
+    choices = []
+    for i in range(len(menu_options)):
+      choices.append(str(i + 1))
     actions = list(menu.values())
     display_menu(menu)
     choice = input("\nPlease choose an option from the menu above, 'q' to quit, or press 'Enter' to return to the previous menu: ")
@@ -654,7 +654,7 @@ def run_menu(menu):
           else:
             quit_pending = run_menu(actions[i])
     else:
-      print("\nSorry, I didn't understand your selection. Please enter a valid number from 1-3.")
+      print("\nSorry, I didn't understand your selection. Please enter a valid option.")
     if quit_pending == True:
       break
 
