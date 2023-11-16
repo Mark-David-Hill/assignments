@@ -4,8 +4,10 @@
 # python3 app.py
 
 # To do: 
-# -Implement options for Cohort Menus
-# -Check on things for Student Cohort Registrations
+# -Implement completing a course for a student
+# -Implement Reactivate student registration
+# -View active registrations for a cohort
+# -View active cohorts for a course
 # -Make sure all requirements are met
 
 from datetime import datetime
@@ -197,11 +199,10 @@ def print_person_details(person_info):
     print('\n--- Invalid person ID. Please try again ---')
 
 def update_choice(person_info, person_choice):
-  pass
   if person_info:
     print_person_details(person_info)
     person_id, person_first_name, person_last_name, person_address, person_city, person_state, person_zipcode, person_phone, person_email, person_password = person_info
-    edit_person_choice = input("\nTo update a field, enter the first letter of the field.\nTo change the person's password, type 'PASSWORD'\nTo deactivate this record, type 'DEACTIVATE'\nTo return to the previous menu, press 'Enter'.\n>>>")
+    edit_person_choice = input("\nTo update a field, enter the first letter of the field.\nTo Register Student to a Cohort, type 'REGISTER'\nTo change the person's password, type 'PASSWORD'\nTo deactivate this record, type 'DEACTIVATE'\nTo return to the previous menu, press 'Enter'.\n>>>")
     if edit_person_choice.lower() == 'i':
       print('\nThe ID cannot be changed.')
     elif edit_person_choice.lower() == 'f':
@@ -236,6 +237,12 @@ def update_choice(person_info, person_choice):
       print(f'\nCurrent Email: {person_email}')
       new_email = input('New Email: ')
       update_person_info('email', new_email, person_choice, 'Email')
+    elif edit_person_choice.lower() == 'register':
+      view_active_cohorts(False)
+      cohort_choice = input('Please enter the ID of the Cohort you would like to register the student to: ')
+      person_name = person_first_name + ' ' + person_last_name
+      assign_to_cohort(cohort_choice, person_id, person_name)
+      return False
     elif edit_person_choice.lower() == 'password':
       password_guess = input("Please input the person's current password: ")
       if password_guess == person_password:
@@ -413,7 +420,7 @@ def deactivate_course_prompt():
 # Cohort Functionality
 
 # View Active Cohorts
-def view_active_cohorts():
+def view_active_cohorts(prompt_deactivation = True):
   print('\n--- Cohorts ---')
   rows = get_all_active_cohorts()
   if rows:
@@ -432,7 +439,8 @@ def view_active_cohorts():
   else:
     print(f'\n- There are currently no Active Cohorts -')
     return False
-  deactivate_cohort_prompt()
+  if prompt_deactivation == True:
+    deactivate_cohort_prompt()
 
 def view_inactive_cohorts():
   print('\n--- Cohorts ---')
@@ -468,7 +476,7 @@ def get_all_active_cohorts():
     # rows = cursor.execute("SELECT cohort_id, instructor_id, course_id, start_date, end_date FROM Cohorts WHERE active=True").fetchall()
     return rows
   except Exception as e:
-    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+    print(f'\n- ERROR: {e}. Cohort data could not be loaded. -')
 
 def get_cohort_info(id, active):
   try:
@@ -477,7 +485,7 @@ def get_cohort_info(id, active):
     row = cursor.execute("SELECT c.cohort_id, p.first_name, p.last_name, cour.name, c.start_date, c.end_date FROM Cohorts c JOIN People p ON p.person_id = c.instructor_id JOIN Courses cour ON cour.course_id = c.course_id WHERE c.cohort_id=? AND c.active=?", (id, active)).fetchone()
     return row
   except Exception as e:
-    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+    print(f'\n- ERROR: {e}. Cohort data could not be loaded. -')
 
 def get_all_inactive_cohorts():
   try:
@@ -485,7 +493,7 @@ def get_all_inactive_cohorts():
     # rows = cursor.execute("SELECT cohort_id, instructor_id, course_id, start_date, end_date FROM Cohorts WHERE active=True").fetchall()
     return rows
   except Exception as e:
-    print(f'\n- ERROR: {e}. Course data could not be loaded. -')
+    print(f'\n- ERROR: {e}. Cohort data could not be loaded. -')
 
 def create_cohort():
   print('\nPlease fill out the form below to add a new Cohort:\n')
@@ -561,35 +569,110 @@ def reactivate_cohort_option():
 
 
 
-
 # Student Cohort Registration Functionality
+def assign_to_cohort(cohort_id, person_id, person_name):
+  try:
+    get_cohort_info(cohort_id, True)
+    really_register = input(f'Are you sure you want to register {person_name} to Cohort #{cohort_id}? (Y/N): ')
+    if really_register.lower() == 'y':
+      # assign_to_cohort(cohort_id, person_id, person_name)
+      current_date_time = datetime.now()
+      date_str = current_date_time.strftime("%Y/%m/%d %H:%M:%S")
+      values = [person_id, cohort_id, date_str]
+      insert_sql = "INSERT INTO Student_Cohort_Registrations (student_id, cohort_id, registration_date, active) VALUES (?, ?, ?, True)"
+      # Breaks here:
+      cursor.execute(insert_sql, values)
+      connection.commit()
+      print(f'\nSUCCESS: Person "{person_name}" Successfully registered!')
+    elif really_register.lower() != 'n':
+      print('Invalid choice. Please try again.')
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Registration was not completed. -')
 
-# Assign a Student to a Cohort. The user must select:
-# A. An existing Person as the student
-# B. An existing Cohort as the cohort
-def assign_to_cohort():
-  print('Assign to Cohort!')
+def remove_from_cohort(cohort_id, student_id, first_name, last_name):
+  while True:
+      student_name = first_name + ' ' + last_name
+      really_remove = input(f'\nAre you SURE you want to Remove "{student_name}" from Cohort ID {cohort_id} (Y/N)? ')
+      if really_remove.lower() == 'y':
+        current_date_time = datetime.now()
+        date_str = current_date_time.strftime("%Y/%m/%d %H:%M:%S")
+        sql_remove = f"UPDATE Student_Cohort_Registrations SET active=False, drop_date=? WHERE cohort_id=? AND student_id=?"
+        cursor.execute(sql_remove, (date_str, cohort_id, student_id,)).fetchone()
+        connection.commit()
+        print(f'SUCCESS: "{student_name}" was Removed from Cohort ID {cohort_id}!')
+        break
+      elif really_remove.lower() != 'n':
+        print('\n- ERROR: Invalid Response. Please try again. -')
+      else:
+        break
 
-# Remove a Student from a Cohort
-# A. This should just set the Student_Cohort_Registration record as active = 0 AND set the drop_date to today
-def remove_from_cohort():
-  print('Remove from Cohort!')
+def get_all_active_cohort_registrations():
+  try:
+    rows = cursor.execute("SELECT r.cohort_id, p.first_name, p.last_name, r.registration_date, r.completion_date, r.drop_date, r.student_id FROM Student_Cohort_Registrations r JOIN People p ON r.student_id=p.person_id WHERE r.active=True").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Registration data could not be loaded. -')
+
+def get_all_inactive_cohort_registrations():
+  try:
+    rows = cursor.execute("SELECT r.cohort_id, p.first_name + ' ' + p.last_name, r.registration_date, r.completion_date, r.drop_date, r.student_id FROM Student_Cohort_Registrations r JOIN People p ON r.student_id=p.person_id WHERE r.active=False").fetchall()
+    return rows
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Registration data could not be loaded. -')
+
+def get_cohort_registration_info(cohort_id, student_id, active):
+  try:
+    row = cursor.execute("SELECT r.cohort_id, r.student_id, p.first_name, p.last_name, r.registration_date, r.completion_date, r.drop_date FROM Student_Cohort_Registrations r JOIN People p ON r.student_id=p.person_id WHERE r.cohort_id=? AND r.student_id=? AND r.active=True", (cohort_id, student_id,)).fetchone()
+    return row
+  except Exception as e:
+    print(f'\n- ERROR: {e}. Cohort data could not be loaded. -')
+
+def remove_from_cohort_prompt():
+  should_remove = input('Would you like to remove a student from one of these cohorts? (Y/N)?: ')
+  if should_remove.lower() == 'y':
+    print('Please fill out the form below:')
+    cohort_id = input("Cohort ID: ")
+    student_id = input("Student ID: ")
+    registration_info = get_cohort_registration_info(cohort_id, student_id, True)
+    try:
+      remove_from_cohort(registration_info[0], registration_info[1], registration_info[2], registration_info[3])
+    except:
+      print('\n- ERROR: Incorrect ID combination. Could not remove registration. -')
 
 # Complete a Course for a Student. This will set the completion date on the Student_Cohort_Registration.
 def complete_course(student_id):
   print('Complete Course!')
 
-
-
 def reactivate_student_cohort_registration():
   print('Reactivate Student Cohort!')
 
 # View active registrations for a cohort
-def view_active_cohort_registrations():
-  print('View Active Cohort Registrations!')
+def view_active_cohort_registrations(prompt_deactivation = True):
+  print('\n--- Cohort Registrations ---')
+  rows = get_all_active_cohort_registrations()
+  if rows:
+    print(f'{"Cohort ID":<11} {"Student ID":<11} {"Student Name":<18} {"Registration Date":<24} {"Completion Date":<24} {"Drop Date":<24}')
+    for row in rows:
+      row_data = []
+      for i in range(len(row)):
+        if row[i]:
+          row_data.append(row[i])
+        else:
+          row_data.append('None')
+      try:
+        print(f'{row_data[0]:<11} {row_data[6]:<11} {row_data[1] + " " + row_data[2]:<18} {row_data[3]:<24} {row_data[4]:<24} {row_data[5]:<24}')
+      except Exception as e:
+        print(f'\n- ERROR: {e}. Could not print row data for cohorts -')
+  else:
+    print(f'\n- There are currently no Active Cohorts -')
+    return False
+  if prompt_deactivation == True:
+    remove_from_cohort_prompt()
 
-# View active cohorts for a course
-# Any other views you think might be helpful to the user.
+
+
+
+
 
 
 
