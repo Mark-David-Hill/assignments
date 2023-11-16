@@ -5,9 +5,8 @@
 
 # To do: 
 # -Implement completing a course for a student
-# -Implement Reactivate student registration
-# -View active registrations for a cohort
-# -View active cohorts for a course
+# -View active registrations for a cohort (from cohort menu?)
+# -View active cohorts for a course (from course menu?)
 # -Make sure all requirements are met
 
 from datetime import datetime
@@ -615,7 +614,7 @@ def get_all_active_cohort_registrations():
 
 def get_all_inactive_cohort_registrations():
   try:
-    rows = cursor.execute("SELECT r.cohort_id, p.first_name + ' ' + p.last_name, r.registration_date, r.completion_date, r.drop_date, r.student_id FROM Student_Cohort_Registrations r JOIN People p ON r.student_id=p.person_id WHERE r.active=False").fetchall()
+    rows = cursor.execute("SELECT r.cohort_id, p.first_name, p.last_name, r.registration_date, r.completion_date, r.drop_date, r.student_id FROM Student_Cohort_Registrations r JOIN People p ON r.student_id=p.person_id WHERE r.active=False").fetchall()
     return rows
   except Exception as e:
     print(f'\n- ERROR: {e}. Registration data could not be loaded. -')
@@ -643,13 +642,46 @@ def remove_from_cohort_prompt():
 def complete_course(student_id):
   print('Complete Course!')
 
-def reactivate_student_cohort_registration():
-  print('Reactivate Student Cohort!')
+
+
+
+
+def reactivate_cohort_registration(cohort_id, person_id):
+  try:
+    sql_update = f"UPDATE Student_Cohort_Registrations SET active=True WHERE cohort_id=? AND student_id=?"
+    update_values = (cohort_id, person_id,)
+    cursor.execute(sql_update, update_values)
+    connection.commit()
+    print(f'\nSUCCESS: Registration with Student ID# {person_id} and Cohort ID# {cohort_id} set to active!')
+  except Exception as e:
+    print(f"\n- ERROR: {e}. Cohort Registration was not reactivated. -")
+
+def reactivate_cohort_registration_option():
+  are_inactive_cohort_registrations = view_cohort_registrations(False)
+  if are_inactive_cohort_registrations:
+    print('\nTo reactivate a cohort registration, please fill out the form below with the data from your chosen registration:')
+    cohort_id = input("Cohort ID: ")
+    student_id = input("Student ID: ")
+    # registration_info = get_cohort_registration_info(cohort_id, student_id, False)
+    try:
+      reactivate_cohort_registration(cohort_id, student_id)
+    except:
+      print('\n- ERROR: Incorrect ID combination. Could not remove registration. -')
+  else:
+    print('\n- ERROR: There are no inactive Cohort Registrations. Returning to the previous menu. -')
+
+
+
+
 
 # View active registrations for a cohort
-def view_active_cohort_registrations(prompt_deactivation = True):
+def view_cohort_registrations(active = True):
   print('\n--- Cohort Registrations ---')
-  rows = get_all_active_cohort_registrations()
+  rows = None
+  if active:
+    rows = get_all_active_cohort_registrations()
+  else:
+    rows = get_all_inactive_cohort_registrations()
   if rows:
     print(f'{"Cohort ID":<11} {"Student ID":<11} {"Student Name":<18} {"Registration Date":<24} {"Completion Date":<24} {"Drop Date":<24}')
     for row in rows:
@@ -659,16 +691,17 @@ def view_active_cohort_registrations(prompt_deactivation = True):
           row_data.append(row[i])
         else:
           row_data.append('None')
-      try:
-        print(f'{row_data[0]:<11} {row_data[6]:<11} {row_data[1] + " " + row_data[2]:<18} {row_data[3]:<24} {row_data[4]:<24} {row_data[5]:<24}')
-      except Exception as e:
-        print(f'\n- ERROR: {e}. Could not print row data for cohorts -')
+      # try:
+      print(f'{row_data[0]:<11} {row_data[6]:<11} {row_data[1] + " " + row_data[2]:<18} {row_data[3]:<24} {row_data[4]:<24} {row_data[5]:<24}')
+      # except Exception as e:
+      #   print(f'\n- ERROR: {e}. Could not print row data for cohorts -')
   else:
     print(f'\n- There are currently no Active Cohorts -')
     return False
-  if prompt_deactivation == True:
+  if active:
     remove_from_cohort_prompt()
-
+  else:
+    return True
 
 
 
@@ -699,8 +732,8 @@ main_menu = {
     '3. Reactivate a Cohort': reactivate_cohort_option
   },
   '4. Student Cohort Registration Menu': {
-    '\n--- Student Cohort Registration Menu ---\n\n1. View Active Cohort Registrations': view_active_cohort_registrations,
-    '2. Reactivate Cohort Registration': reactivate_student_cohort_registration
+    '\n--- Student Cohort Registration Menu ---\n\n1. View Active Cohort Registrations': view_cohort_registrations,
+    '2. Reactivate Cohort Registration': reactivate_cohort_registration_option
   }
 }
 # assign and remove students from here, also complete courses. Also deactivate
