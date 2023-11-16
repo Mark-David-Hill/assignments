@@ -4,7 +4,6 @@
 # python3 app.py
 
 # To do: 
-# -Implement completing a course for a student
 # -View active registrations for a cohort (from cohort menu?)
 # -View active cohorts for a course (from course menu?)
 # -Make sure all requirements are met
@@ -626,10 +625,19 @@ def get_cohort_registration_info(cohort_id, student_id, active):
   except Exception as e:
     print(f'\n- ERROR: {e}. Cohort data could not be loaded. -')
 
-def remove_from_cohort_prompt():
-  should_remove = input('Would you like to remove a student from one of these cohorts? (Y/N)?: ')
-  if should_remove.lower() == 'y':
-    print('Please fill out the form below:')
+def remove_from_or_complete_cohort_prompt():
+  choice = input("\nTo Complete a course for a student, type 'Complete'\nTo Remove a student from a cohort, type 'Remove'\nTo return to the previous menu, press 'Enter'.\n>>>")
+  if choice.lower() == 'complete':
+    print('\nPlease fill out the form below:')
+    cohort_id = input("Cohort ID: ")
+    student_id = input("Student ID: ")
+    registration_info = get_cohort_registration_info(cohort_id, student_id, True)
+    try:
+      complete_course(registration_info[0], registration_info[1], registration_info[2], registration_info[3])
+    except:
+      print('\n- ERROR: Incorrect ID combination. Could not remove registration. -')
+  elif choice.lower() == 'remove':
+    print('\nPlease fill out the form below:')
     cohort_id = input("Cohort ID: ")
     student_id = input("Student ID: ")
     registration_info = get_cohort_registration_info(cohort_id, student_id, True)
@@ -639,8 +647,22 @@ def remove_from_cohort_prompt():
       print('\n- ERROR: Incorrect ID combination. Could not remove registration. -')
 
 # Complete a Course for a Student. This will set the completion date on the Student_Cohort_Registration.
-def complete_course(student_id):
-  print('Complete Course!')
+def complete_course(cohort_id, student_id, first_name, last_name):
+  while True:
+      student_name = first_name + ' ' + last_name
+      really_remove = input(f'\nAre you SURE you want to mark the student "{student_name}" as having completed the class as part of Cohort ID {cohort_id} (Y/N)? ')
+      if really_remove.lower() == 'y':
+        current_date_time = datetime.now()
+        date_str = current_date_time.strftime("%Y/%m/%d %H:%M:%S")
+        sql_remove = f"UPDATE Student_Cohort_Registrations SET completion_date=? WHERE cohort_id=? AND student_id=?"
+        cursor.execute(sql_remove, (date_str, cohort_id, student_id,)).fetchone()
+        connection.commit()
+        print(f'SUCCESS: "{student_name}" successfully completed the course as part of Cohort ID {cohort_id}!')
+        break
+      elif really_remove.lower() != 'n':
+        print('\n- ERROR: Invalid Response. Please try again. -')
+      else:
+        break
 
 
 
@@ -648,7 +670,7 @@ def complete_course(student_id):
 
 def reactivate_cohort_registration(cohort_id, person_id):
   try:
-    sql_update = f"UPDATE Student_Cohort_Registrations SET active=True WHERE cohort_id=? AND student_id=?"
+    sql_update = f"UPDATE Student_Cohort_Registrations SET active=True, drop_date='None' WHERE cohort_id=? AND student_id=?"
     update_values = (cohort_id, person_id,)
     cursor.execute(sql_update, update_values)
     connection.commit()
@@ -699,7 +721,7 @@ def view_cohort_registrations(active = True):
     print(f'\n- There are currently no Active Cohorts -')
     return False
   if active:
-    remove_from_cohort_prompt()
+    remove_from_or_complete_cohort_prompt()
   else:
     return True
 
