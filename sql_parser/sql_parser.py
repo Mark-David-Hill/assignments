@@ -1,10 +1,3 @@
-def has_operator(str_list):
-  operator_in_str = False
-  for str in str_list:
-    if '=' in str or '>' in str or '<' in str:
-      operator_in_str = True
-  return operator_in_str
-
 def get_where_str_list(str_list):
   operators = ['<=', '>=', '=', '<', '>', 'LIKE']
   clause_operator = ''
@@ -69,7 +62,7 @@ def parse_sql(query):
         'fields': [],
         'table': '',
         'where': {},
-        'order by': {},
+        'order_by': {},
         'limit': 0
       }
 
@@ -111,11 +104,11 @@ def parse_sql(query):
       if 'order by' in lower_query_str:
         order_by_data = get_clause_data(query_list, 'order')
         if order_by_data[0].lower() == 'by':
-          sql_dict['order by']['field'] = order_by_data[1]
+          sql_dict['order_by']['field'] = order_by_data[1]
           if len(order_by_data) <= 2:
-            sql_dict['order by']['order'] = 'ASC'
+            sql_dict['order_by']['order'] = 'ASC'
           else:
-            sql_dict['order by']['order'] = order_by_data[2]
+            sql_dict['order_by']['order'] = order_by_data[2]
 
       return sql_dict
     else:

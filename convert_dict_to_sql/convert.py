@@ -75,3 +75,7 @@ expected_output = "SELECT name, model, price FROM Products WHERE make LIKE '%App
 test_output = to_sql(test_dict)
 print(expected_output)
 print(test_output)
+
+test_dict = {'fields': ['name', 'model', 'price'], 'table': 'Products', 'where': {'AND': [{'field': 'make', 'value': '%Apple%', 'operator': 'LIKE'}, {'field': 'price', 'value': '1100.00', 'operator': '<'}]}, 'order by': {'field': 'price', 'order': 'DESC'}, 'limit': 0}
+test_output = to_sql(test_dict)
+print(test_output)
