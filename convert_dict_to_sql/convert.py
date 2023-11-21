@@ -1,3 +1,19 @@
+def get_operator_str(str):
+  operator = ''
+  if str == 'lessthan':
+    operator = '<'
+  elif str == 'greaterthan':
+    operator = '>'
+  elif str == 'equals':
+    operator = '='
+  elif str == 'lessthanorequals':
+    operator = '<='
+  elif str == 'greaterthanorequals':
+    operator = '>='
+  elif str == 'LIKE':
+    operator = 'LIKE'
+  return operator
+
 def to_sql(sql_dict):
   sql_str = 'SELECT '
   field_list = sql_dict['fields']
@@ -11,30 +27,38 @@ def to_sql(sql_dict):
   from_value = sql_dict['table']
   sql_str += from_value + ' '
 
-  sql_str += 'WHERE '
-  if sql_dict['where']['AND']:
-    for i in range(len(sql_dict['where']['AND'])):
-      if i > 0 and i < len(sql_dict['where']['AND']):
-        sql_str += 'AND '
-      where_clause = sql_dict['where']['AND'][i]
+  try:
+    if sql_dict['where']['AND']:
+      sql_str += 'WHERE '
+      for i in range(len(sql_dict['where']['AND'])):
+        if i > 0 and i < len(sql_dict['where']['AND']):
+          sql_str += 'AND '
+        where_clause = sql_dict['where']['AND'][i]
+        sql_str += str(where_clause['field']) + ' '
+        operator = str(where_clause['operator'])
+        operator = get_operator_str(operator)
+        sql_str += operator + ' '
+        if type(where_clause['value']) is str:
+          sql_str += ("'" + str(where_clause['value']) + "' ")
+        else:
+          sql_str += (f"{where_clause['value']:.2f}" + " ")
+  except:
+    pass
+  try:
+    if sql_dict['where']:
+      sql_str += 'WHERE '
+      where_clause = sql_dict['where']
       sql_str += str(where_clause['field']) + ' '
       operator = str(where_clause['operator'])
-      if operator == 'lessthan':
-        operator = '<'
-      elif operator == 'greaterthan':
-        operater = '>'
-      elif operator == 'equals':
-        operator = '='
-      elif operator == 'lessthanorequals':
-        operator = '<='
-      elif operator == 'greaterthanorequals':
-        operator = '>='
+      operator = get_operator_str(operator)
       sql_str += operator + ' '
       if type(where_clause['value']) is str:
         sql_str += ("'" + str(where_clause['value']) + "' ")
       else:
         sql_str += (f"{where_clause['value']:.2f}" + " ")
-
+  except:
+    pass
+    
   if sql_dict['order_by']:
     sql_str += 'ORDER BY '
     sql_str += sql_dict['order_by']['field'] + ' '
@@ -76,6 +100,6 @@ test_output = to_sql(test_dict)
 print(expected_output)
 print(test_output)
 
-test_dict = {'fields': ['name', 'model', 'price'], 'table': 'Products', 'where': {'AND': [{'field': 'make', 'value': '%Apple%', 'operator': 'LIKE'}, {'field': 'price', 'value': '1100.00', 'operator': '<'}]}, 'order by': {'field': 'price', 'order': 'DESC'}, 'limit': 0}
+test_dict = {'fields': ['name', 'model', 'price'], 'table': 'Products', 'where': {'field': 'make', 'value': '%Apple%', 'operator': 'lessthan'}, 'order_by': {'field': 'price', 'order': 'DESC'}, 'limit': 0}
 test_output = to_sql(test_dict)
 print(test_output)
